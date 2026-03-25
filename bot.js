@@ -1,6 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const https = require('https');
+const path = require('path');
 const { parseText, parseSummaryRange } = require('./parser');
 const { saveExpense, deleteExpense, getDetailedSummary, getRecentText, clearDatabase, setBudget, getBudget, getMonthSpend, getWeeklySummaryText, getGroupSplit } = require('./expenses');
 const { generateCSV } = require('./export');
@@ -10,7 +11,7 @@ require('dotenv').config();
 // ─── EXPRESS HEALTH CHECK ────────────────────────────────────────────────────
 const app = express();
 const port = process.env.PORT || 3000;
-app.get('/', (req, res) => res.send('🚀 Telegram Expense Bot is Online!'));
+app.use(express.static(path.join(__dirname, 'landing')));
 const server = app.listen(port, () => console.log(`🌍 Health check on port ${port}`));
 
 // ─── SELF-PING TO STAY AWAKE (RENDER) ───────────────────────────────────────
