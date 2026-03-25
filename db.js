@@ -1,4 +1,3 @@
-const sqlite3 = require('sqlite3').verbose();
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 

@@ -1,7 +1,5 @@
 const { supabase } = require('./db');
 
-const isCloud = () => !!supabase;
-
 // ─── EXPENSES ────────────────────────────────────────────────────────────────
 
 async function saveExpense(userId, amount, category, date, description, groupId, callback) {
@@ -108,40 +106,36 @@ async function getBudget(userId, callback) {
 }
 
 async function getGroupSplit(groupId, callback) {
-    if (isCloud()) {
-        const { data, error } = await supabase
-            .from('expenses')
-            .select('userId, amount')
-            .eq('groupId', groupId);
-        
-        if (error) return callback(error);
-        if (!data || data.length === 0) return callback(null, "No group expenses yet!");
+    const { data, error } = await supabase
+        .from('expenses')
+        .select('userId, amount')
+        .eq('groupId', groupId);
+    
+    if (error) return callback(error);
+    if (!data || data.length === 0) return callback(null, "No group expenses yet!");
 
-        const totals = {};
-        let grandTotal = 0;
-        data.forEach(ex => {
-            totals[ex.userId] = (totals[ex.userId] || 0) + ex.amount;
-            grandTotal += ex.amount;
-        });
+    const totals = {};
+    let grandTotal = 0;
+    data.forEach(ex => {
+        totals[ex.userId] = (totals[ex.userId] || 0) + ex.amount;
+        grandTotal += ex.amount;
+    });
 
-        const users = Object.keys(totals);
-        const perPerson = grandTotal / users.length;
+    const users = Object.keys(totals);
+    const perPerson = grandTotal / users.length;
 
-        let reply = `👥 *Group Khata Split*\n`;
-        reply += `Total Spent: ₹${grandTotal.toFixed(2)}\n`;
-        reply += `Per Person: ₹${perPerson.toFixed(2)}\n\n`;
+    let reply = `👥 *Group Khata Split*\n`;
+    reply += `Total Spent: ₹${grandTotal.toFixed(2)}\n`;
+    reply += `Per Person: ₹${perPerson.toFixed(2)}\n\n`;
 
-        users.forEach(uid => {
-            const paid = totals[uid];
-            const balance = paid - perPerson;
-            const status = balance >= 0 ? `gets back ₹${balance.toFixed(2)}` : `owes ₹${Math.abs(balance).toFixed(2)}`;
-            reply += `• <ID:${uid}>: Paid ₹${paid.toFixed(2)} (${status})\n`;
-        });
+    users.forEach(uid => {
+        const paid = totals[uid];
+        const balance = paid - perPerson;
+        const status = balance >= 0 ? `gets back ₹${balance.toFixed(2)}` : `owes ₹${Math.abs(balance).toFixed(2)}`;
+        reply += `• <ID:${uid}>: Paid ₹${paid.toFixed(2)} (${status})\n`;
+    });
 
-        callback(null, reply);
-    } else {
-        callback(null, "Group split only supported in Cloud Mode.");
-    }
+    callback(null, reply);
 }
 
 module.exports = { saveExpense, deleteExpense, getDetailedSummary, getRecentText, clearDatabase, setBudget, getBudget, getMonthSpend, getWeeklySummaryText, getGroupSplit };
