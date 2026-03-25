@@ -148,15 +148,24 @@ bot.onText(/\/split/, async (msg) => {
 
 // /export — Send CSV file
 bot.onText(/\/export/, async (msg) => {
-    const userId = String(msg.from.id);
-    generateCSV(userId, async (err, csvPath) => {
-        if (err || !csvPath) return bot.sendMessage(msg.chat.id, '❌ No data to export yet!');
-        try {
-            await bot.sendDocument(msg.chat.id, csvPath, {}, { filename: 'expenses.csv' });
-        } catch (e) {
-            bot.sendMessage(msg.chat.id, '❌ Failed to send CSV file.');
+    const opts = {
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    { text: 'This Week', callback_data: 'export_this_week' },
+                    { text: 'This Month', callback_data: 'export_this_month' }
+                ],
+                [
+                    { text: 'Last Month', callback_data: 'export_last_month' },
+                    { text: 'This Year', callback_data: 'export_this_year' }
+                ],
+                [
+                    { text: 'All Time', callback_data: 'export_all_time' }
+                ]
+            ]
         }
-    });
+    };
+    bot.sendMessage(msg.chat.id, '📅 Which timeframe would you like to export?', opts);
 });
 
 // /reset — Clear user data
@@ -168,25 +177,47 @@ bot.onText(/\/reset/, (msg) => {
     });
 });
 
-// ─── INLINE BUTTON HANDLER (UNDO) ────────────────────────────────────────────
+// ─── INLINE BUTTON HANDLERS ──────────────────────────────────────────────────
 bot.on('callback_query', async (query) => {
     const data = query.data;
     const userId = String(query.from.id);
     const chatId = query.message.chat.id;
     const messageId = query.message.message_id;
 
+    // Handle Undo
     if (data.startsWith('undo_')) {
         const expenseId = data.split('_')[1];
         deleteExpense(userId, expenseId, (err) => {
             if (err) {
                 bot.answerCallbackQuery(query.id, { text: '❌ Could not undo.' });
             } else {
-                // Edit the original message to show it was undone
                 bot.editMessageText(
                     '↩️ *Expense removed!*',
                     { chat_id: chatId, message_id: messageId, parse_mode: 'Markdown' }
                 );
                 bot.answerCallbackQuery(query.id, { text: '✅ Expense deleted!' });
+            }
+        });
+    }
+
+    // Handle Export Timeframe
+    if (data.startsWith('export_')) {
+        const timeframe = data.replace('export_', '');
+        bot.answerCallbackQuery(query.id, { text: '⏳ Generating CSV...' });
+        
+        generateCSV(userId, timeframe, async (err, csvPath) => {
+            if (err || !csvPath) return bot.sendMessage(chatId, `❌ No expenses found for this timeframe.`);
+            try {
+                bot.deleteMessage(chatId, messageId).catch(()=>{}); // remove inline keyboard
+                
+                const tfLabel = timeframe.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+                await bot.sendDocument(chatId, csvPath, 
+                    { caption: `📊 Here is your expense report (${tfLabel})` }, 
+                    { filename: `MyKhataBot_${tfLabel.replace(' ','')}.csv` }
+                );
+                require('fs').unlink(csvPath, ()=>{}); // clean up temp file
+            } catch (e) {
+                bot.sendMessage(chatId, '❌ Failed to send CSV file.');
             }
         });
     }
