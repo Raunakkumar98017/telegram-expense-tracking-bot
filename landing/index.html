@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyKhataBot — Your AI-Powered Telegram Expense Tracker</title>
+    <meta name="description" content="Track expenses, split bills with roommates, get AI-powered financial advice in Hinglish. All inside Telegram.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Animated particle canvas -->
+    <canvas id="particles"></canvas>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-brand">💸 MyKhataBot</div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#demo">Demo</a>
+            <a href="#how-it-works">How It Works</a>
+        </div>
+        <a href="https://t.me/MyKhataBot" target="_blank" class="btn btn-nav">Open in Telegram ✈️</a>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <div class="hero-badge reveal">🤖 AI-Powered Finance</div>
+            <h1 class="hero-title reveal">
+                Stop Forgetting <br>
+                <span class="gradient-text">Where Your Money Went.</span>
+            </h1>
+            <p class="hero-subtitle reveal">
+                MyKhataBot is your personal finance assistant, living right inside Telegram.
+                Track expenses in seconds, split bills with roommates, and get roasted by AI for overspending.
+            </p>
+            <div class="hero-cta reveal">
+                <a href="https://t.me/MyKhataBot" target="_blank" class="btn btn-primary">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.820 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                    Start Tracking Free
+                </a>
+                <a href="#features" class="btn btn-outline">Explore Features →</a>
+            </div>
+            <div class="hero-stats reveal">
+                <div class="stat"><span class="stat-num">100%</span><span class="stat-label">Free</span></div>
+                <div class="stat-divider"></div>
+                <div class="stat"><span class="stat-num">24/7</span><span class="stat-label">Always Online</span></div>
+                <div class="stat-divider"></div>
+                <div class="stat"><span class="stat-num">AI</span><span class="stat-label">Powered</span></div>
+            </div>
+        </div>
+        <div class="hero-visual reveal">
+            <div class="phone-mockup">
+                <div class="phone-frame">
+                    <div class="chat-demo" id="chat-demo">
+                        <div class="chat-msg user">spent 200 on lunch</div>
+                        <div class="chat-msg bot">
+                            ✅ <strong>Expense Saved!</strong><br>
+                            💰 Amount: ₹200.00<br>
+                            📂 Category: Food<br>
+                            <button class="undo-btn">↩️ Undo</button>
+                        </div>
+                        <div class="chat-msg user">/roast</div>
+                        <div class="chat-msg bot typing-indicator" id="typing">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <div class="chat-msg bot hidden" id="roast-msg">
+                            🎭 <strong>Your Financial Shayari:</strong><br><br>
+                            <em>Khaya piya kuch nahi,<br>
+                            Lunch pe ₹200 gaya!<br>
+                            Bhai, wallet rota hai,<br>
+                            Tu khata hi jaya!</em> 😂
+                        </div>
+                    </div>
+                </div>
+                <div class="phone-glow"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES SECTION -->
+    <section class="features" id="features">
+        <div class="section-header reveal">
+            <span class="section-tag">What Can It Do?</span>
+            <h2>Your Smartest <span class="gradient-text">Financial Companion.</span></h2>
+            <p>Everything you need to manage money — for yourself or your entire hostel group.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card reveal" data-delay="0">
+                <div class="feature-icon">💬</div>
+                <h3>Natural Language Logging</h3>
+                <p>Just type <em>"spent 300 on groceries"</em> and the bot understands. No forms, no buttons.</p>
+                <div class="feature-glow"></div>
+            </div>
+            <div class="feature-card reveal featured" data-delay="100">
+                <div class="feature-badge">⭐ Most Popular</div>
+                <div class="feature-icon">👥</div>
+                <h3>Group Khata</h3>
+                <p>Add the bot to your hostel group. Everyone logs expenses. Type <strong>/split</strong> to see who owes whom — no arguments!</p>
+                <div class="feature-glow"></div>
+            </div>
+            <div class="feature-card reveal" data-delay="200">
+                <div class="feature-icon">🎭</div>
+                <h3>AI Shayari Advisor</h3>
+                <p>Type <strong>/roast</strong> for a personalized financial roast in Hinglish. It praises saving and roasts overspending beautifully.</p>
+                <div class="feature-glow"></div>
+            </div>
+            <div class="feature-card reveal" data-delay="0">
+                <div class="feature-icon">🔥</div>
+                <h3>Burn Rate Alerts</h3>
+                <p>Set a monthly budget. Get warned the moment your spending pace is about to blow the limit.</p>
+                <div class="feature-glow"></div>
+            </div>
+            <div class="feature-card reveal" data-delay="100">
+                <div class="feature-icon">↩️</div>
+                <h3>One-Tap Undo</h3>
+                <p>Made a mistake? Every expense has an Undo button. Your data is always accurate.</p>
+                <div class="feature-glow"></div>
+            </div>
+            <div class="feature-card reveal" data-delay="200">
+                <div class="feature-icon">📊</div>
+                <h3>CSV Export</h3>
+                <p>Download all your expenses as a spreadsheet with <strong>/export</strong>. Total control over your data.</p>
+                <div class="feature-glow"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="section-header reveal">
+            <span class="section-tag">Simple Setup</span>
+            <h2>Up and Running in <span class="gradient-text">30 Seconds.</span></h2>
+        </div>
+        <div class="steps-container">
+            <div class="step reveal" data-delay="0">
+                <div class="step-number">01</div>
+                <div class="step-content">
+                    <h3>Open Telegram</h3>
+                    <p>Search for <strong>@MyKhataBot</strong> in the Telegram search bar or click the link below.</p>
+                </div>
+            </div>
+            <div class="step-connector reveal"></div>
+            <div class="step reveal" data-delay="150">
+                <div class="step-number">02</div>
+                <div class="step-content">
+                    <h3>Type /start</h3>
+                    <p>Say hello! The bot will greet you and explain all its commands.</p>
+                </div>
+            </div>
+            <div class="step-connector reveal"></div>
+            <div class="step reveal" data-delay="300">
+                <div class="step-number">03</div>
+                <div class="step-content">
+                    <h3>Just Type Naturally</h3>
+                    <p>Say <em>"spent 500 on electricity"</em> and you're tracking expenses already!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS / CTA -->
+    <section class="cta-section" id="demo">
+        <div class="cta-card reveal">
+            <div class="cta-content">
+                <h2>Ready to take control <br>of your finances? 💸</h2>
+                <p>Join thousands of students and hostel groups already using MyKhataBot. It's completely free, forever.</p>
+                <a href="https://t.me/MyKhataBot" target="_blank" class="btn btn-primary btn-large">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.820 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                     Launch MyKhataBot Now →
+                </a>
+            </div>
+            <div class="cta-emoji-wall">
+                <span>💸</span><span>📊</span><span>🎭</span>
+                <span>👥</span><span>🔥</span><span>✅</span>
+                <span>📈</span><span>🤖</span><span>💰</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-brand">💸 MyKhataBot</div>
+        <p>Built with ❤️ for broke students everywhere.</p>
+        <div class="footer-links">
+            <a href="https://t.me/MyKhataBot" target="_blank">Open Bot</a>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+</body>
+</html>
