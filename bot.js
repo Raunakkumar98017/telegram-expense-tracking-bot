@@ -122,7 +122,7 @@ bot.onText(/\/roast/, async (msg) => {
     const userId = String(msg.from.id);
     const name = msg.from.first_name || 'Dost';
     
-    await bot.sendMessage(msg.chat.id, '🎭 _Consulting the AI Shayar about your finances..._', { parse_mode: 'Markdown' });
+    await bot.sendMessage(msg.chat.id, '🎭 _Consulting AI Shayar (Final v3)..._', { parse_mode: 'Markdown' });
     
     const spendingData = await getWeeklySummaryText(userId);
     const roast = await getPoetryRoast(name, spendingData);
