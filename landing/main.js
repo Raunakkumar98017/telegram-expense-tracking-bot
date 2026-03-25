@@ -24,7 +24,7 @@ class Particle {
         this.vy = (Math.random() - 0.5) * 0.4;
         this.alpha = Math.random() * 0.5 + 0.1;
         this.radius = Math.random() * 1.5 + 0.5;
-        const colors = ['#f97316', '#ef4444', '#f59e0b', '#fb923c'];
+        const colors = ['#22d3ee', '#818cf8', '#4ade80', '#67e8f9'];
         this.color = colors[Math.floor(Math.random() * colors.length)];
     }
     update() {
