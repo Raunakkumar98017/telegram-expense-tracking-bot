@@ -1,0 +1,10 @@
+node_modules
+.wwebjs_auth
+.wwebjs_cache
+expenses.db
+*.csv
+.env
+.git
+migrate.js
+clean.js
+inspect_db.js
