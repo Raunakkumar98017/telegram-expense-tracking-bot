@@ -27,10 +27,11 @@ Keep it under 150 words. Be warm, funny, and encouraging.
 
     try {
         const result = await model.generateContent(prompt);
-        return result.response.text();
+        const response = await result.response;
+        return response.text();
     } catch (err) {
-        console.error('Gemini error:', err.message);
-        return '🤖 AI advisor is taking a chai break. Try /roast again in a moment!';
+        console.error('Gemini error:', err);
+        return `🤖 AI advisor is taking a chai break.\n\n*Error details:* \`${err.message}\``;
     }
 }
 
