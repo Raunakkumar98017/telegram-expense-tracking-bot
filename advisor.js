@@ -4,8 +4,6 @@ require('dotenv').config();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function getPoetryRoast(userName, spendingData) {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
     const prompt = `
 You are a witty, fun, warm-hearted financial advisor who speaks in Hinglish (mix of Hindi and English).
 You write short, funny and relatable Shayari or two-liners based on a user's spending habits.
@@ -25,14 +23,24 @@ Respond ONLY with:
 Keep it under 150 words. Be warm, funny, and encouraging.
 `;
 
-    try {
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text();
-    } catch (err) {
-        console.error('Gemini error:', err);
-        return `🤖 AI advisor is taking a chai break.\n\n*Error details:* \`${err.message}\``;
+    const modelsToTry = ['gemini-1.5-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-pro', 'gemini-pro'];
+    let lastError = '';
+
+    for (const modelName of modelsToTry) {
+        try {
+            console.log(`🤖 Attempting Gemini model: ${modelName}`);
+            const model = genAI.getGenerativeModel({ model: modelName });
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text();
+            if (text) return text;
+        } catch (err) {
+            console.error(`Gemini error (${modelName}):`, err.message);
+            lastError = err.message;
+        }
     }
+
+    return `🤖 AI advisor is taking a chai break.\n\n*Last error details:* \`${lastError}\`\n\n💡 *Tip:* Check if "Generative Language API" is enabled in your Google Cloud Console.`;
 }
 
 module.exports = { getPoetryRoast };
