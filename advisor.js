@@ -40,7 +40,8 @@ Keep it under 150 words. Be warm, funny, and encouraging.
         }
     }
 
-    return `🤖 AI advisor is taking a chai break.\n\n*Last error details:* \`${lastError}\`\n\n💡 *Tip:* Check if "Generative Language API" is enabled in your Google Cloud Console.`;
+    // ABSOLUTE LAST RESORT: Simple Text Summary
+    return `📊 *Spending Summary (Simple Mode)*\n\n${spendingData}\n\n💡 *Note:* Gemini AI is currently unavailable. Check your API quota in Google AI Studio.`;
 }
 
 module.exports = { getPoetryRoast };
