@@ -2,7 +2,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const https = require('https');
 const { parseText, parseSummaryRange } = require('./parser');
-const { saveExpense, deleteExpense, getDetailedSummary, getRecentText, clearDatabase, setBudget, getBudget, getMonthSpend, getWeeklySummaryText } = require('./expenses');
+const { saveExpense, deleteExpense, getDetailedSummary, getRecentText, clearDatabase, setBudget, getBudget, getMonthSpend, getWeeklySummaryText, getGroupSplit } = require('./expenses');
 const { generateCSV } = require('./export');
 const { getPoetryRoast } = require('./advisor');
 require('dotenv').config();
@@ -70,6 +70,7 @@ bot.onText(/\/start/, (msg) => {
         `/list — Last 5 expenses\n` +
         `/budget <amount> — Set monthly budget\n` +
         `/roast — Get AI financial advice (Shayari style!)\n` +
+        `/split — (Groups only) Show shared balances\n` +
         `/export — Download CSV\n` +
         `/reset — Clear your data\n` +
         `/help — Show this message`,
@@ -128,6 +129,21 @@ bot.onText(/\/roast/, async (msg) => {
     const roast = await getPoetryRoast(name, spendingData);
     
     bot.sendMessage(msg.chat.id, `🎭 *Your Financial Shayari:*\n\n${roast}`, { parse_mode: 'Markdown' });
+});
+
+// /split — (Groups only) Calculate shared balance
+bot.onText(/\/split/, async (msg) => {
+    const chatId = msg.chat.id;
+    const chatType = msg.chat.type;
+
+    if (chatType === 'private') {
+        return bot.sendMessage(chatId, '❌ The `/split` command only works in groups!', { parse_mode: 'Markdown' });
+    }
+
+    getGroupSplit(String(chatId), (err, reply) => {
+        if (err) return bot.sendMessage(chatId, '❌ Error calculating split.');
+        bot.sendMessage(chatId, reply, { parse_mode: 'Markdown' });
+    });
 });
 
 // /export — Send CSV file
@@ -198,8 +214,10 @@ bot.on('message', async (msg) => {
     if (!/\d/.test(lower)) return;
 
     const parsed = parseText(text);
+    const groupId = msg.chat.type !== 'private' ? String(msg.chat.id) : null;
+
     if (parsed.amount > 0) {
-        saveExpense(userId, parsed.amount, parsed.category, parsed.date, parsed.description, async (err, id) => {
+        saveExpense(userId, parsed.amount, parsed.category, parsed.date, parsed.description, groupId, async (err, id) => {
             if (err) {
                 bot.sendMessage(msg.chat.id, '❌ Failed to save expense.');
             } else {

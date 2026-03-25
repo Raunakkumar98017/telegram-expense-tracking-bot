@@ -4,17 +4,17 @@ const isCloud = () => !!supabase;
 
 // ─── EXPENSES ────────────────────────────────────────────────────────────────
 
-async function saveExpense(userId, amount, category, date, description, callback) {
+async function saveExpense(userId, amount, category, date, description, groupId, callback) {
     if (isCloud()) {
         const { data, error } = await supabase
             .from('expenses')
-            .insert([{ userId, amount, category, date, description }])
+            .insert([{ userId, amount, category, date, description, groupId }])
             .select();
         if (error) return callback(error);
         callback(null, data[0].id);
     } else {
-        const query = `INSERT INTO expenses (userId, amount, category, date, description) VALUES (?, ?, ?, ?, ?)`;
-        sqliteDb.run(query, [userId, amount, category, date, description], function(err) {
+        const query = `INSERT INTO expenses (userId, amount, category, date, description, groupId) VALUES (?, ?, ?, ?, ?, ?)`;
+        sqliteDb.run(query, [userId, amount, category, date, description, groupId], function(err) {
             callback(err, this ? this.lastID : null);
         });
     }
@@ -156,13 +156,41 @@ async function getBudget(userId, callback) {
     }
 }
 
-async function getMonthSpend(userId) {
-    const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+async function getGroupSplit(groupId, callback) {
     if (isCloud()) {
-        const { data } = await supabase.from('expenses').select('amount').eq('userId', userId).gte('date', startDate);
-        return data ? data.reduce((acc, r) => acc + r.amount, 0) : 0;
+        const { data, error } = await supabase
+            .from('expenses')
+            .select('userId, amount')
+            .eq('groupId', groupId);
+        
+        if (error) return callback(error);
+        if (!data || data.length === 0) return callback(null, "No group expenses yet!");
+
+        const totals = {};
+        let grandTotal = 0;
+        data.forEach(ex => {
+            totals[ex.userId] = (totals[ex.userId] || 0) + ex.amount;
+            grandTotal += ex.amount;
+        });
+
+        const users = Object.keys(totals);
+        const perPerson = grandTotal / users.length;
+
+        let reply = `👥 *Group Khata Split*\n`;
+        reply += `Total Spent: ₹${grandTotal.toFixed(2)}\n`;
+        reply += `Per Person: ₹${perPerson.toFixed(2)}\n\n`;
+
+        users.forEach(uid => {
+            const paid = totals[uid];
+            const balance = paid - perPerson;
+            const status = balance >= 0 ? `gets back ₹${balance.toFixed(2)}` : `owes ₹${Math.abs(balance).toFixed(2)}`;
+            reply += `• <ID:${uid}>: Paid ₹${paid.toFixed(2)} (${status})\n`;
+        });
+
+        callback(null, reply);
+    } else {
+        callback(null, "Group split only supported in Cloud Mode.");
     }
-    return 0;
 }
 
-module.exports = { saveExpense, deleteExpense, getDetailedSummary, getRecentText, clearDatabase, setBudget, getBudget, getMonthSpend, getWeeklySummaryText };
+module.exports = { saveExpense, deleteExpense, getDetailedSummary, getRecentText, clearDatabase, setBudget, getBudget, getMonthSpend, getWeeklySummaryText, getGroupSplit };
