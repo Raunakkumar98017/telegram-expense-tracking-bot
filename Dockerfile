@@ -1,23 +1,18 @@
-# Use a Node image with Chromium dependencies pre-installed
-FROM ghcr.io/puppeteer/puppeteer:latest
+# Lightweight Node.js image (No Chromium needed for Telegram!)
+FROM node:20-slim
 
 # Set working directory
 WORKDIR /app
 
-# Switch to root to install any missing dependencies (if needed)
-USER root
-
-# Copy package files
+# Copy package files and install dependencies
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy the rest of the application code
+# Copy the rest of the source code
 COPY . .
 
-# Expose the port for Render health checks
+# Expose the health check port
 EXPOSE 3000
 
-# Start the bot
+# Start the Telegram bot
 CMD ["node", "bot.js"]

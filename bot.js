@@ -1,123 +1,141 @@
-const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
+const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const { parseText, parseSummaryRange } = require('./parser');
 const { saveExpense, getDetailedSummary, getRecentText, clearDatabase } = require('./expenses');
 const { generateCSV } = require('./export');
+require('dotenv').config();
 
+// Start Express health check server for Render
 const app = express();
 const port = process.env.PORT || 3000;
+app.get('/', (req, res) => res.send('🚀 Telegram Expense Bot is Online!'));
+app.listen(port, () => console.log(`🌍 Health check on port ${port}`));
 
-// Render health check
-app.get('/', (req, res) => res.send('WhatsApp Bot is Online! 🚀'));
-app.listen(port, () => console.log(`🌍 Health check listening on port ${port}`));
+// Initialize Telegram Bot
+const token = process.env.TELEGRAM_TOKEN;
+if (!token) {
+    console.error('❌ TELEGRAM_TOKEN is not set in the .env file!');
+    process.exit(1);
+}
 
-// Initialize WhatsApp client
-const client = new Client({
-    authStrategy: new LocalAuth(),
-    webVersionCache: {
-        type: 'remote',
-        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
-    },
-    puppeteer: {
-        headless: true, // Auto-set for cloud, can be toggled via env if needed
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-extensions',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--no-zygote',
-            '--single-process',
-            '--disable-gpu'
-        ],
-    }
+const bot = new TelegramBot(token, { polling: true });
+console.log('🤖 Telegram Expense Bot is running!');
+
+// ──────────────────────────────────────────────
+// COMMANDS
+// ──────────────────────────────────────────────
+
+// /start — Welcome message
+bot.onText(/\/start/, (msg) => {
+    const name = msg.from.first_name || 'there';
+    bot.sendMessage(msg.chat.id, 
+        `👋 Hey *${name}*! I'm your personal Expense Tracker Bot!\n\n` +
+        `Here's what you can do:\n\n` +
+        `💬 *Log an expense*:\n  _spent 200 on lunch_\n\n` +
+        `📊 *Get summaries*:\n  _total today_\n  _total this week_\n  _total this month_\n\n` +
+        `📋 *Commands*:\n` +
+        `  /list — Last 5 expenses\n` +
+        `  /export — Download CSV\n` +
+        `  /reset — Clear your data\n` +
+        `  /help — Show this message`,
+        { parse_mode: 'Markdown' }
+    );
 });
 
-// Deduplication cache to prevent processing the same message twice
-const processedMessages = new Set();
-// Clean the cache every hour to prevent memory leaks
-setInterval(() => processedMessages.clear(), 1000 * 60 * 60);
-
-client.on('qr', (qr) => {
-    console.log('\n📱 Scan this QR code in WhatsApp to log in:');
-    qrcode.generate(qr, { small: true });
+// /help
+bot.onText(/\/help/, (msg) => {
+    bot.sendMessage(msg.chat.id,
+        `📖 *How to use the Bot:*\n\n` +
+        `Just type naturally! Examples:\n` +
+        `  • _spent 150 on coffee_\n` +
+        `  • _paid 500 for groceries today_\n` +
+        `  • _total today_ / _total this week_\n\n` +
+        `*Commands:*\n` +
+        `/list — Your last 5 expenses\n` +
+        `/export — Download all data as CSV\n` +
+        `/reset — Clear your expense history`,
+        { parse_mode: 'Markdown' }
+    );
 });
 
-client.on('ready', () => {
-    console.log('\n🚀 WhatsApp Expense Bot is online and ready!');
-    console.log('Open WhatsApp and send a message to yourself to log an expense.\n');
+// /list — Recent expenses
+bot.onText(/\/list/, (msg) => {
+    const userId = String(msg.from.id);
+    getRecentText(userId, (reply) => {
+        bot.sendMessage(msg.chat.id, reply, { parse_mode: 'Markdown' });
+    });
 });
 
-// Listen for incoming messages
-client.on('message_create', async (msg) => {
-    // 1. Deduplication: Don't process the same message ID twice
-    if (processedMessages.has(msg.id.id)) return;
-    processedMessages.add(msg.id.id);
+// /export — Send CSV file
+bot.onText(/\/export/, async (msg) => {
+    const userId = String(msg.from.id);
+    generateCSV(userId, async (err, csvPath) => {
+        if (err || !csvPath) {
+            return bot.sendMessage(msg.chat.id, '❌ No data to export yet!');
+        }
+        try {
+            await bot.sendDocument(msg.chat.id, csvPath, {}, { filename: 'expenses.csv' });
+        } catch (e) {
+            bot.sendMessage(msg.chat.id, '❌ Failed to send CSV file.');
+        }
+    });
+});
 
-    // 2. Public Mode: Listen to all incoming messages from everyone
-    const userId = msg.from;
-    const text = msg.body.trim().toLowerCase();
-    if (!text) return;
+// /reset — Clear user data
+bot.onText(/\/reset/, (msg) => {
+    const userId = String(msg.from.id);
+    clearDatabase(userId, (err, count) => {
+        if (err) bot.sendMessage(msg.chat.id, '❌ Error clearing data.');
+        else bot.sendMessage(msg.chat.id, `✅ Your history has been cleared! Removed *${count}* entries.`, { parse_mode: 'Markdown' });
+    });
+});
 
-    // 3. Fix: Ignore automated replies from the bot itself
-    if (text.startsWith('✅') || text.startsWith('❌') || text.startsWith('📊') || text.startsWith('*📝')) {
-        return;
-    }
-
-    // Command: "list" -> Show recent expenses
-    if (text === 'list') {
-        getRecentText(userId, (reply) => msg.reply(reply));
-        return;
-    }
-
-    // Command: "total ..." -> Show categorized summary
-    if (text.startsWith('total') || text === 'summary') {
-        const range = parseSummaryRange(text);
-        getDetailedSummary(userId, range, (reply) => msg.reply(reply));
-        return;
-    }
-
-    // Command: "export" -> Generate CSV
-    if (text === 'export') {
-        generateCSV(userId, async (err, csvPath) => {
-            if (err || !csvPath) return msg.reply('❌ No data to export.');
-            try {
-                const media = MessageMedia.fromFilePath(csvPath);
-                await client.sendMessage(msg.from, media, { caption: "Here is your expense export!" });
-            } catch (e) {
-                msg.reply("❌ Error sending the CSV file.");
-            }
-        });
-        return;
-    }
-
-    // Command: "reset" or "clear" -> Wipe database for THIS user only
-    if (text === 'reset' || text === 'clear') {
-        clearDatabase(userId, (err, count) => {
-            if (err) msg.reply("❌ Error clearing database.");
-            else msg.reply(`✅ Your database history has been cleared! Removed ${count} entries.`);
-        });
-        return;
-    }
-
-    // Natural Language Expense parsing
-    if (!/\d/.test(text)) return; 
-
-    // Parse text to extract info
-    const parsed = parseText(msg.body);
+// ──────────────────────────────────────────────
+// NATURAL LANGUAGE EXPENSE PARSING
+// ──────────────────────────────────────────────
+bot.on('message', async (msg) => {
+    // Ignore commands (already handled above)
+    if (msg.text && msg.text.startsWith('/')) return;
     
-    // Only save if an amount was found
+    const userId = String(msg.from.id);
+    const text = msg.text || '';
+    const lower = text.trim().toLowerCase();
+
+    if (!lower) return;
+
+    // Summary request: "total today", "total this week" etc.
+    if (lower.startsWith('total') || lower === 'summary') {
+        const range = parseSummaryRange(lower);
+        getDetailedSummary(userId, range, (reply) => {
+            bot.sendMessage(msg.chat.id, reply, { parse_mode: 'Markdown' });
+        });
+        return;
+    }
+
+    // Must contain a number to be an expense
+    if (!/\d/.test(lower)) return;
+
+    // Try to parse as an expense
+    const parsed = parseText(text);
     if (parsed.amount > 0) {
         saveExpense(userId, parsed.amount, parsed.category, parsed.date, parsed.description, (err, id) => {
             if (err) {
-                msg.reply('❌ Failed to save expense.');
+                bot.sendMessage(msg.chat.id, '❌ Failed to save expense.');
             } else {
-                msg.reply(`✅ *Saved Expense #${id}*\n💰 ₹${parsed.amount.toFixed(2)}\n📂 ${parsed.category}\n📅 ${parsed.date}`);
+                bot.sendMessage(msg.chat.id,
+                    `✅ *Expense Saved!*\n\n` +
+                    `💰 Amount: ₹${parsed.amount.toFixed(2)}\n` +
+                    `📂 Category: ${parsed.category}\n` +
+                    `📅 Date: ${parsed.date}\n` +
+                    `📝 Note: _${parsed.description}_`,
+                    { parse_mode: 'Markdown' }
+                );
             }
         });
     }
 });
 
-client.initialize();
+// Error handling
+bot.on('polling_error', (error) => {
+    console.error('Polling error:', error.message);
+});
