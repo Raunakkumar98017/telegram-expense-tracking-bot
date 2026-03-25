@@ -1,5 +1,5 @@
-const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
+const https = require('https');
 const { parseText, parseSummaryRange } = require('./parser');
 const { saveExpense, deleteExpense, getDetailedSummary, getRecentText, clearDatabase, setBudget, getBudget, getMonthSpend, getWeeklySummaryText } = require('./expenses');
 const { generateCSV } = require('./export');
@@ -10,7 +10,20 @@ require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 3000;
 app.get('/', (req, res) => res.send('🚀 Telegram Expense Bot is Online!'));
-app.listen(port, () => console.log(`🌍 Health check on port ${port}`));
+const server = app.listen(port, () => console.log(`🌍 Health check on port ${port}`));
+
+// ─── SELF-PING TO STAY AWAKE (RENDER) ───────────────────────────────────────
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL;
+if (RENDER_URL) {
+    console.log(`📡 Self-ping active for: ${RENDER_URL}`);
+    setInterval(() => {
+        https.get(RENDER_URL, (res) => {
+            console.log(`Ping successful: ${res.statusCode}`);
+        }).on('error', (err) => {
+            console.error('Ping failed:', err.message);
+        });
+    }, 13 * 60 * 1000); // Ping every 13 mins to stay awake (Render sleeps at 15)
+}
 
 // ─── TELEGRAM BOT ────────────────────────────────────────────────────────────
 const token = process.env.TELEGRAM_TOKEN;
