@@ -1,3 +1,4 @@
+const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const https = require('https');
 const { parseText, parseSummaryRange } = require('./parser');
