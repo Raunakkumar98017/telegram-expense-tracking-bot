@@ -63,6 +63,7 @@ body {
     font-weight: 700;
     background: var(--gradient);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.5px;
 }
@@ -164,6 +165,7 @@ body {
 .gradient-text {
     background: var(--gradient);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     background-size: 200% 200%;
@@ -188,6 +190,7 @@ body {
     font-weight: 700;
     background: var(--gradient);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 .stat-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
@@ -353,6 +356,11 @@ body {
     text-transform: uppercase;
     letter-spacing: 1px;
 }
+.feature-badge.upcoming {
+    background: transparent;
+    border: 1px solid var(--border-active);
+    color: var(--teal);
+}
 .feature-icon {
     font-size: 2.2rem;
     margin-bottom: 1rem;
@@ -401,6 +409,7 @@ body {
     font-family: var(--font-display);
     background: var(--gradient);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     opacity: 0.3;
     margin-bottom: 1rem;
@@ -479,6 +488,7 @@ body {
     font-weight: 700;
     background: var(--gradient);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 0.5rem;
 }
