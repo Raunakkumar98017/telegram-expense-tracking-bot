@@ -1,64 +1,85 @@
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const { parseText, parseSummaryRange } = require('./parser');
-const { saveExpense, getDetailedSummary, getRecentText, clearDatabase } = require('./expenses');
+const { saveExpense, deleteExpense, getDetailedSummary, getRecentText, clearDatabase, setBudget, getBudget, getMonthSpend, getWeeklySummaryText } = require('./expenses');
 const { generateCSV } = require('./export');
+const { getPoetryRoast } = require('./advisor');
 require('dotenv').config();
 
-// Start Express health check server for Render
+// ─── EXPRESS HEALTH CHECK ────────────────────────────────────────────────────
 const app = express();
 const port = process.env.PORT || 3000;
 app.get('/', (req, res) => res.send('🚀 Telegram Expense Bot is Online!'));
 app.listen(port, () => console.log(`🌍 Health check on port ${port}`));
 
-// Initialize Telegram Bot
+// ─── TELEGRAM BOT ────────────────────────────────────────────────────────────
 const token = process.env.TELEGRAM_TOKEN;
-if (!token) {
-    console.error('❌ TELEGRAM_TOKEN is not set in the .env file!');
-    process.exit(1);
-}
+if (!token) { console.error('❌ TELEGRAM_TOKEN not set!'); process.exit(1); }
 
 const bot = new TelegramBot(token, { polling: true });
 console.log('🤖 Telegram Expense Bot is running!');
 
-// ──────────────────────────────────────────────
-// COMMANDS
-// ──────────────────────────────────────────────
+// ─── HELPER: BURN RATE CHECK ─────────────────────────────────────────────────
+async function checkBurnRate(userId, chatId) {
+    const budget = await new Promise(resolve => getBudget(userId, (err, b) => resolve(b)));
+    if (!budget) return;
 
-// /start — Welcome message
+    const monthSpend = await getMonthSpend(userId);
+    const now = new Date();
+    const dayOfMonth = now.getDate();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    
+    const dailyRate = monthSpend / dayOfMonth;
+    const projectedSpend = dailyRate * daysInMonth;
+
+    if (projectedSpend > budget) {
+        const runOutDay = Math.floor(budget / dailyRate);
+        bot.sendMessage(chatId,
+            `🔥 *Burn Rate Alert!*\n\n` +
+            `You've spent ₹${monthSpend.toFixed(0)} in ${dayOfMonth} days.\n` +
+            `At this pace, you'll *run out of your ₹${budget} budget by the ${runOutDay}th* of this month!\n\n` +
+            `💡 _Slow down a bit!_`,
+            { parse_mode: 'Markdown' }
+        );
+    }
+}
+
+// ─── COMMANDS ────────────────────────────────────────────────────────────────
+
 bot.onText(/\/start/, (msg) => {
     const name = msg.from.first_name || 'there';
-    bot.sendMessage(msg.chat.id, 
-        `👋 Hey *${name}*! I'm your personal Expense Tracker Bot!\n\n` +
-        `Here's what you can do:\n\n` +
-        `💬 *Log an expense*:\n  _spent 200 on lunch_\n\n` +
-        `📊 *Get summaries*:\n  _total today_\n  _total this week_\n  _total this month_\n\n` +
-        `📋 *Commands*:\n` +
-        `  /list — Last 5 expenses\n` +
-        `  /export — Download CSV\n` +
-        `  /reset — Clear your data\n` +
-        `  /help — Show this message`,
+    bot.sendMessage(msg.chat.id,
+        `👋 Hey *${name}*! I'm your personal AI Expense Tracker!\n\n` +
+        `💬 *Log an expense:*\n  _spent 200 on lunch_\n\n` +
+        `📊 *Summaries:*\n  _total today_ / _total this week_\n\n` +
+        `🎭 *Commands:*\n` +
+        `/list — Last 5 expenses\n` +
+        `/budget <amount> — Set monthly budget\n` +
+        `/roast — Get AI financial advice (Shayari style!)\n` +
+        `/export — Download CSV\n` +
+        `/reset — Clear your data\n` +
+        `/help — Show this message`,
         { parse_mode: 'Markdown' }
     );
 });
 
-// /help
 bot.onText(/\/help/, (msg) => {
     bot.sendMessage(msg.chat.id,
-        `📖 *How to use the Bot:*\n\n` +
-        `Just type naturally! Examples:\n` +
+        `📖 *How to use:*\n\n` +
+        `Just type naturally:\n` +
         `  • _spent 150 on coffee_\n` +
         `  • _paid 500 for groceries today_\n` +
-        `  • _total today_ / _total this week_\n\n` +
+        `  • _total this week_\n\n` +
         `*Commands:*\n` +
         `/list — Your last 5 expenses\n` +
+        `/budget 5000 — Set ₹5000 as your monthly limit\n` +
+        `/roast — Get AI Shayari about your spending!\n` +
         `/export — Download all data as CSV\n` +
-        `/reset — Clear your expense history`,
+        `/reset — Clear your history`,
         { parse_mode: 'Markdown' }
     );
 });
 
-// /list — Recent expenses
 bot.onText(/\/list/, (msg) => {
     const userId = String(msg.from.id);
     getRecentText(userId, (reply) => {
@@ -66,13 +87,40 @@ bot.onText(/\/list/, (msg) => {
     });
 });
 
+// /budget <amount> — Set a monthly budget
+bot.onText(/\/budget (.+)/, (msg, match) => {
+    const userId = String(msg.from.id);
+    const amount = parseFloat(match[1]);
+    if (isNaN(amount) || amount <= 0) {
+        return bot.sendMessage(msg.chat.id, '❌ Please enter a valid amount. Example: `/budget 5000`', { parse_mode: 'Markdown' });
+    }
+    setBudget(userId, amount, (err) => {
+        if (err) return bot.sendMessage(msg.chat.id, '❌ Failed to set budget.');
+        bot.sendMessage(msg.chat.id, 
+            `✅ *Monthly Budget Set!*\n\n💰 You will be warned when your spending pace exceeds ₹${amount.toFixed(0)}.\n\n_I'll keep an eye on your burn rate for you!_ 👀`,
+            { parse_mode: 'Markdown' }
+        );
+    });
+});
+
+// /roast — Gemini Shayari Advisor
+bot.onText(/\/roast/, async (msg) => {
+    const userId = String(msg.from.id);
+    const name = msg.from.first_name || 'Dost';
+    
+    await bot.sendMessage(msg.chat.id, '🎭 _Consulting the AI Shayar about your finances..._', { parse_mode: 'Markdown' });
+    
+    const spendingData = await getWeeklySummaryText(userId);
+    const roast = await getPoetryRoast(name, spendingData);
+    
+    bot.sendMessage(msg.chat.id, `🎭 *Your Financial Shayari:*\n\n${roast}`, { parse_mode: 'Markdown' });
+});
+
 // /export — Send CSV file
 bot.onText(/\/export/, async (msg) => {
     const userId = String(msg.from.id);
     generateCSV(userId, async (err, csvPath) => {
-        if (err || !csvPath) {
-            return bot.sendMessage(msg.chat.id, '❌ No data to export yet!');
-        }
+        if (err || !csvPath) return bot.sendMessage(msg.chat.id, '❌ No data to export yet!');
         try {
             await bot.sendDocument(msg.chat.id, csvPath, {}, { filename: 'expenses.csv' });
         } catch (e) {
@@ -90,20 +138,40 @@ bot.onText(/\/reset/, (msg) => {
     });
 });
 
-// ──────────────────────────────────────────────
-// NATURAL LANGUAGE EXPENSE PARSING
-// ──────────────────────────────────────────────
+// ─── INLINE BUTTON HANDLER (UNDO) ────────────────────────────────────────────
+bot.on('callback_query', async (query) => {
+    const data = query.data;
+    const userId = String(query.from.id);
+    const chatId = query.message.chat.id;
+    const messageId = query.message.message_id;
+
+    if (data.startsWith('undo_')) {
+        const expenseId = data.split('_')[1];
+        deleteExpense(userId, expenseId, (err) => {
+            if (err) {
+                bot.answerCallbackQuery(query.id, { text: '❌ Could not undo.' });
+            } else {
+                // Edit the original message to show it was undone
+                bot.editMessageText(
+                    '↩️ *Expense removed!*',
+                    { chat_id: chatId, message_id: messageId, parse_mode: 'Markdown' }
+                );
+                bot.answerCallbackQuery(query.id, { text: '✅ Expense deleted!' });
+            }
+        });
+    }
+});
+
+// ─── NATURAL LANGUAGE EXPENSE PARSING ────────────────────────────────────────
 bot.on('message', async (msg) => {
-    // Ignore commands (already handled above)
     if (msg.text && msg.text.startsWith('/')) return;
     
     const userId = String(msg.from.id);
     const text = msg.text || '';
     const lower = text.trim().toLowerCase();
-
     if (!lower) return;
 
-    // Summary request: "total today", "total this week" etc.
+    // Summary request
     if (lower.startsWith('total') || lower === 'summary') {
         const range = parseSummaryRange(lower);
         getDetailedSummary(userId, range, (reply) => {
@@ -112,30 +180,38 @@ bot.on('message', async (msg) => {
         return;
     }
 
-    // Must contain a number to be an expense
+    // Must have a number to be an expense
     if (!/\d/.test(lower)) return;
 
-    // Try to parse as an expense
     const parsed = parseText(text);
     if (parsed.amount > 0) {
-        saveExpense(userId, parsed.amount, parsed.category, parsed.date, parsed.description, (err, id) => {
+        saveExpense(userId, parsed.amount, parsed.category, parsed.date, parsed.description, async (err, id) => {
             if (err) {
                 bot.sendMessage(msg.chat.id, '❌ Failed to save expense.');
             } else {
-                bot.sendMessage(msg.chat.id,
+                // Send confirmation WITH the Undo inline button
+                await bot.sendMessage(msg.chat.id,
                     `✅ *Expense Saved!*\n\n` +
                     `💰 Amount: ₹${parsed.amount.toFixed(2)}\n` +
                     `📂 Category: ${parsed.category}\n` +
                     `📅 Date: ${parsed.date}\n` +
                     `📝 Note: _${parsed.description}_`,
-                    { parse_mode: 'Markdown' }
+                    {
+                        parse_mode: 'Markdown',
+                        reply_markup: {
+                            inline_keyboard: [[
+                                { text: '↩️ Undo', callback_data: `undo_${id}` }
+                            ]]
+                        }
+                    }
                 );
+
+                // Check burn rate after every expense
+                await checkBurnRate(userId, msg.chat.id);
             }
         });
     }
 });
 
 // Error handling
-bot.on('polling_error', (error) => {
-    console.error('Polling error:', error.message);
-});
+bot.on('polling_error', (error) => console.error('Polling error:', error.message));
