@@ -124,7 +124,7 @@ bot.onText(/\/roast/, async (msg) => {
     const userId = String(msg.from.id);
     const name = msg.from.first_name || 'Sher'; // Fun name
     
-    await bot.sendMessage(msg.chat.id, '🔥 *Raunak ka Kharcha check ho raha hai...*', { parse_mode: 'Markdown' });
+    await bot.sendMessage(msg.chat.id, `🔥 *${name} ka Kharcha check ho raha hai...*`, { parse_mode: 'Markdown' });
     
     const spendingData = await getWeeklySummaryText(userId);
     const roast = await getPoetryRoast(name, spendingData);
