@@ -18,11 +18,23 @@ function parseText(input) {
   }
   const dateStr = date.toISOString().split('T')[0];
   
-  // 3. Extract Category (Looks for the word after "on" or "for")
+  // 3. Extract Category (Improved for multi-word like "cold drink")
   let category = "General";
-  const categoryMatch = normalized.match(/(?:on|for)\s+([a-zA-Z]+)(?:\s|$)/);
+  const categoryMatch = normalized.match(/(?:on|for)\s+(.+)$/);
+  
   if (categoryMatch) {
-      category = categoryMatch[1].charAt(0).toUpperCase() + categoryMatch[1].slice(1).toLowerCase();
+      let rawCategory = categoryMatch[1].trim();
+      
+      // Clean up common trailing words that shouldn't be in the category
+      const dateKeywords = ['today', 'yesterday', 'tomorrow', 'now'];
+      const words = rawCategory.split(/\s+/);
+      const filteredWords = words.filter(word => !dateKeywords.includes(word.toLowerCase()));
+      
+      if (filteredWords.length > 0) {
+          category = filteredWords
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+              .join(' ');
+      }
   }
 
   return { amount, category, date: dateStr, description: input.trim() };
