@@ -1,13 +1,18 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const OpenAI = require('openai');
 require('dotenv').config();
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const client = new OpenAI({
+    apiKey: process.env.GROQ_API_KEY,
+    baseURL: "https://api.groq.com/openai/v1",
+});
 
 async function getPoetryRoast(userName, spendingData) {
-    const prompt = `
+    const systemPrompt = `
 You are a witty, fun, warm-hearted financial advisor who speaks in Hinglish (mix of Hindi and English).
 You write short, funny and relatable Shayari or two-liners based on a user's spending habits.
+`;
 
+    const userPrompt = `
 User name: ${userName}
 Spending this week:
 ${spendingData}
@@ -23,25 +28,24 @@ Respond ONLY with:
 Keep it under 150 words. Be warm, funny, and encouraging.
 `;
 
-    const modelsToTry = ['gemini-1.5-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-pro', 'gemini-pro'];
-    let lastError = '';
+    try {
+        console.log(`🤖 Requesting Groq advisor for ${userName}...`);
+        const completion = await client.chat.completions.create({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userPrompt },
+            ],
+        });
 
-    for (const modelName of modelsToTry) {
-        try {
-            console.log(`🤖 Attempting Gemini model: ${modelName}`);
-            const model = genAI.getGenerativeModel({ model: modelName });
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
-            if (text) return text;
-        } catch (err) {
-            console.error(`Gemini error (${modelName}):`, err.message);
-            lastError = err.message;
-        }
+        const text = completion.choices[0].message.content;
+        if (text) return text;
+    } catch (err) {
+        console.error(`Groq error:`, err.message);
     }
 
     // ABSOLUTE LAST RESORT: Simple Text Summary
-    return `📊 *Spending Summary (Simple Mode)*\n\n${spendingData}\n\n💡 *Note:* Gemini AI is currently unavailable. Check your API quota in Google AI Studio.`;
+    return `📊 *Spending Summary (Simple Mode)*\n\n${spendingData}\n\n💡 *Note:* AI Advisor is currently unavailable. Please check your Groq API limits.`;
 }
 
 module.exports = { getPoetryRoast };
