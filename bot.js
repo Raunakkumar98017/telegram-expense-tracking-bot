@@ -271,7 +271,104 @@ bot.on('message', async (msg) => {
 
     // 2. Process all detected parts
     for (const part of finalParts) {
-        const lower = part.toLowerCase();
+        const lower = part.toLowerCase().trim();
+
+        // --- PLAIN TEXT COMMANDS ---
+
+        // 1. Help
+        if (lower === 'help' || lower === 'start' || lower === 'hi' || lower === 'hello') {
+            const name = msg.from.first_name || 'there';
+            bot.sendMessage(msg.chat.id,
+                `👋 Hey *${name}*! I'm your personal AI Expense Tracker!\n\n` +
+                `💬 *Log an expense:*\n  _spent 200 on lunch_\n\n` +
+                `📊 *Summaries:*\n  _total today_ / _total this week_\n\n` +
+                `🎭 *Commands (no / needed):*\n` +
+                `list — Last 5 expenses\n` +
+                `budget <amount> — Set monthly budget\n` +
+                `roast — Get AI financial advice (Shayari style!)\n` +
+                `split — (Groups only) Show shared balances\n` +
+                `export — Download CSV\n` +
+                `reset — Clear your data`,
+                { parse_mode: 'Markdown' }
+            );
+            continue;
+        }
+
+        // 2. List / History
+        if (lower === 'list' || lower === 'recent' || lower === 'history') {
+            getRecentText(userId, (reply) => {
+                bot.sendMessage(msg.chat.id, reply, { parse_mode: 'Markdown' });
+            });
+            continue;
+        }
+
+        // 3. Roast / Shayari
+        if (lower === 'roast' || lower === 'shayari' || lower === 'advise') {
+            const name = msg.from.first_name || 'Sher';
+            await bot.sendMessage(msg.chat.id, `🔥 *${name} ka Kharcha check ho raha hai...*`, { parse_mode: 'Markdown' });
+            const spendingData = await getWeeklySummaryText(userId);
+            const roast = await getPoetryRoast(name, spendingData);
+            bot.sendMessage(msg.chat.id, `🎭 *Shayari-e-Kharcha (Powered by Groq):*\n\n${roast}`, { parse_mode: 'Markdown' });
+            continue;
+        }
+
+        // 4. Budget
+        if (lower.startsWith('budget')) {
+            const amountMatch = lower.match(/budget\s+(\d+(\.\d{1,2})?)/);
+            if (amountMatch) {
+                const amount = parseFloat(amountMatch[1]);
+                setBudget(userId, amount, (err) => {
+                    if (err) return bot.sendMessage(msg.chat.id, '❌ Failed to set budget.');
+                    bot.sendMessage(msg.chat.id, 
+                        `✅ *Monthly Budget Set!*\n\n💰 You will be warned when your spending pace exceeds ₹${amount.toFixed(0)}.\n\n_I'll keep an eye on your burn rate for you!_ 👀`,
+                        { parse_mode: 'Markdown' }
+                    );
+                });
+            } else {
+                bot.sendMessage(msg.chat.id, '❓ To set a budget, use: `budget 5000`', { parse_mode: 'Markdown' });
+            }
+            continue;
+        }
+
+        // 5. Split / Balance
+        if (lower === 'split' || lower === 'balance') {
+            if (msg.chat.type === 'private') {
+                bot.sendMessage(msg.chat.id, '❌ The `split` command only works in groups!', { parse_mode: 'Markdown' });
+            } else {
+                getGroupSplit(String(msg.chat.id), (err, reply) => {
+                    if (err) return bot.sendMessage(msg.chat.id, '❌ Error calculating split.');
+                    bot.sendMessage(msg.chat.id, reply, { parse_mode: 'Markdown' });
+                });
+            }
+            continue;
+        }
+
+        // 6. Export / CSV
+        if (lower === 'export' || lower === 'csv' || lower === 'download') {
+            const opts = {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: 'This Week', callback_data: 'export_this_week' },
+                            { text: 'This Month', callback_data: 'this_month' }
+                        ],
+                        [
+                            { text: 'All Data', callback_data: 'all_time' }
+                        ]
+                    ]
+                }
+            };
+            bot.sendMessage(msg.chat.id, '📅 Which timeframe would you like to export?', opts);
+            continue;
+        }
+
+        // 7. Reset
+        if (lower === 'reset' || lower === 'clear' || lower === 'delete') {
+            bot.sendMessage(msg.chat.id, '⚠️ *Clear all data?*\nPlease use the click command /reset to confirm deletion as a safety measure.', { parse_mode: 'Markdown' });
+            continue;
+        }
+
+        // --- END PLAIN TEXT COMMANDS ---
 
         // Summary request
         if (lower.startsWith('total') || lower === 'summary') {
