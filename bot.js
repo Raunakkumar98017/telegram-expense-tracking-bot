@@ -119,17 +119,17 @@ bot.onText(/\/budget (.+)/, (msg, match) => {
     });
 });
 
-// /roast — Gemini Shayari Advisor
+// /roast — Groq Shayari Advisor
 bot.onText(/\/roast/, async (msg) => {
     const userId = String(msg.from.id);
-    const name = msg.from.first_name || 'Dost';
+    const name = msg.from.first_name || 'Sher'; // Fun name
     
-    await bot.sendMessage(msg.chat.id, '🎭 _Consulting AI Shayar (Final v3)..._', { parse_mode: 'Markdown' });
+    await bot.sendMessage(msg.chat.id, '🔥 *Raunak ka Kharcha check ho raha hai...*', { parse_mode: 'Markdown' });
     
     const spendingData = await getWeeklySummaryText(userId);
     const roast = await getPoetryRoast(name, spendingData);
     
-    bot.sendMessage(msg.chat.id, `🎭 *Your Financial Shayari:*\n\n${roast}`, { parse_mode: 'Markdown' });
+    bot.sendMessage(msg.chat.id, `🎭 *Shayari-e-Kharcha (Powered by Groq):*\n\n${roast}`, { parse_mode: 'Markdown' });
 });
 
 // /split — (Groups only) Calculate shared balance
@@ -230,50 +230,54 @@ bot.on('message', async (msg) => {
     
     const userId = String(msg.from.id);
     const text = msg.text || '';
-    const lower = text.trim().toLowerCase();
-    if (!lower) return;
+    const lines = text.split('\n');
+    
+    for (const line of lines) {
+        const lower = line.trim().toLowerCase();
+        if (!lower) continue;
 
-    // Summary request
-    if (lower.startsWith('total') || lower === 'summary') {
-        const range = parseSummaryRange(lower);
-        getDetailedSummary(userId, range, (reply) => {
-            bot.sendMessage(msg.chat.id, reply, { parse_mode: 'Markdown' });
-        });
-        return;
-    }
+        // Summary request
+        if (lower.startsWith('total') || lower === 'summary') {
+            const range = parseSummaryRange(lower);
+            getDetailedSummary(userId, range, (reply) => {
+                bot.sendMessage(msg.chat.id, reply, { parse_mode: 'Markdown' });
+            });
+            continue; // Move to next line if any
+        }
 
-    // Must have a number to be an expense
-    if (!/\d/.test(lower)) return;
+        // Must have a number to be an expense
+        if (!/\d/.test(lower)) continue;
 
-    const parsed = parseText(text);
-    const groupId = msg.chat.type !== 'private' ? String(msg.chat.id) : null;
+        const parsed = parseText(line);
+        const groupId = msg.chat.type !== 'private' ? String(msg.chat.id) : null;
 
-    if (parsed.amount > 0) {
-        saveExpense(userId, parsed.amount, parsed.category, parsed.date, parsed.description, groupId, async (err, id) => {
-            if (err) {
-                bot.sendMessage(msg.chat.id, '❌ Failed to save expense.');
-            } else {
-                // Send confirmation WITH the Undo inline button
-                await bot.sendMessage(msg.chat.id,
-                    `✅ *Expense Saved!*\n\n` +
-                    `💰 Amount: ₹${parsed.amount.toFixed(2)}\n` +
-                    `📂 Category: ${parsed.category}\n` +
-                    `📅 Date: ${parsed.date}\n` +
-                    `📝 Note: _${parsed.description}_`,
-                    {
-                        parse_mode: 'Markdown',
-                        reply_markup: {
-                            inline_keyboard: [[
-                                { text: '↩️ Undo', callback_data: `undo_${id}` }
-                            ]]
+        if (parsed.amount > 0) {
+            saveExpense(userId, parsed.amount, parsed.category, parsed.date, parsed.description, groupId, async (err, id) => {
+                if (err) {
+                    bot.sendMessage(msg.chat.id, `❌ Failed to save: "${line}"`);
+                } else {
+                    // Send confirmation WITH the Undo inline button
+                    await bot.sendMessage(msg.chat.id,
+                        `✅ *Expense Saved!*\n\n` +
+                        `💰 Amount: ₹${parsed.amount.toFixed(2)}\n` +
+                        `📂 Category: ${parsed.category}\n` +
+                        `📅 Date: ${parsed.date}\n` +
+                        `📝 Note: _${parsed.description}_`,
+                        {
+                            parse_mode: 'Markdown',
+                            reply_markup: {
+                                inline_keyboard: [[
+                                    { text: '↩️ Undo', callback_data: `undo_${id}` }
+                                ]]
+                            }
                         }
-                    }
-                );
+                    );
 
-                // Check burn rate after every expense
-                await checkBurnRate(userId, msg.chat.id);
-            }
-        });
+                    // Check burn rate after every expense
+                    await checkBurnRate(userId, msg.chat.id);
+                }
+            });
+        }
     }
 });
 

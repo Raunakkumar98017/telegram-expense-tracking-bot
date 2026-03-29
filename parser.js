@@ -18,13 +18,23 @@ function parseText(input) {
   }
   const dateStr = date.toISOString().split('T')[0];
   
-  // 3. Extract Category (Improved for multi-word like "cold drink")
+  // 3. Extract Category (Smarter: handles "40 cold drink" and "40 on cold drink")
   let category = "General";
-  const categoryMatch = normalized.match(/(?:on|for)\s+(.+)$/);
-  
-  if (categoryMatch) {
-      let rawCategory = categoryMatch[1].trim();
-      
+  let rawCategory = "";
+
+  const onForMatch = normalized.match(/(?:on|for)\s+(.+)$/);
+  if (onForMatch) {
+      rawCategory = onForMatch[1].trim();
+  } else {
+      // Fallback: If no "on/for", take everything after the amount
+      const amountPattern = /(?:₹|rs\.?|\$)?\s*\d+(\.\d{1,2})?\s*(rupees|rs|dollars|bucks)?/i;
+      const afterAmountMatch = normalized.match(new RegExp(amountPattern.source + "\\s*(.+)$", "i"));
+      if (afterAmountMatch) {
+          rawCategory = afterAmountMatch[afterAmountMatch.length - 1].trim();
+      }
+  }
+
+  if (rawCategory) {
       // Clean up common trailing words that shouldn't be in the category
       const dateKeywords = ['today', 'yesterday', 'tomorrow', 'now'];
       const words = rawCategory.split(/\s+/);
