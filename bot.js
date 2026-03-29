@@ -201,6 +201,20 @@ bot.on('callback_query', async (query) => {
         });
     }
 
+    // Handle Total Timeframe
+    if (data.startsWith('total_')) {
+        const timeframe = data.replace('total_', '');
+        bot.answerCallbackQuery(query.id, { text: '📊 Fetching total...' });
+        
+        getDetailedSummary(userId, timeframe, (reply) => {
+            bot.editMessageText(reply, {
+                chat_id: chatId,
+                message_id: messageId,
+                parse_mode: 'Markdown'
+            });
+        });
+    }
+
     // Handle Export Timeframe
     if (data.startsWith('export_')) {
         const timeframe = data.replace('export_', '');
@@ -261,10 +275,31 @@ bot.on('message', async (msg) => {
 
         // Summary request
         if (lower.startsWith('total') || lower === 'summary') {
-            const range = parseSummaryRange(lower);
-            getDetailedSummary(userId, range, (reply) => {
-                bot.sendMessage(msg.chat.id, reply, { parse_mode: 'Markdown' });
-            });
+            const hasRange = lower.includes('today') || lower.includes('week') || lower.includes('month') || lower.includes('year');
+            
+            if (hasRange) {
+                const range = parseSummaryRange(lower);
+                getDetailedSummary(userId, range, (reply) => {
+                    bot.sendMessage(msg.chat.id, reply, { parse_mode: 'Markdown' });
+                });
+            } else {
+                // Show interactive menu
+                const opts = {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: 'Today', callback_data: 'total_today' },
+                                { text: 'This Week', callback_data: 'total_week' }
+                            ],
+                            [
+                                { text: 'This Month', callback_data: 'total_month' },
+                                { text: 'All Time', callback_data: 'total_all' }
+                            ]
+                        ]
+                    }
+                };
+                bot.sendMessage(msg.chat.id, '📊 *Select Timeframe for Summary:*', { parse_mode: 'Markdown', ...opts });
+            }
             continue;
         }
 
