@@ -35,14 +35,24 @@ function parseText(input) {
   }
 
   if (rawCategory) {
-      // Clean up common trailing words that shouldn't be in the category
-      const dateKeywords = ['today', 'yesterday', 'tomorrow', 'now'];
+      // Clean up common trailing words and conjunctions
+      const filterKeywords = ['today', 'yesterday', 'tomorrow', 'now', 'and', '&', 'with', 'for', 'on'];
       const words = rawCategory.split(/\s+/);
-      const filteredWords = words.filter(word => !dateKeywords.includes(word.toLowerCase()));
+      
+      // Filter out keywords and empty strings
+      let filteredWords = words.filter(word => {
+          const w = word.toLowerCase().replace(/[^\w]/g, ''); // remove punctuation for comparison
+          return w && !filterKeywords.includes(w);
+      });
       
       if (filteredWords.length > 0) {
           category = filteredWords
-              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+              .map(word => {
+                  // Remove trailing punctuation like commas, periods, etc.
+                  const cleaned = word.replace(/[.,!?;:]+$/, '');
+                  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
+              })
+              .filter(w => w.length > 0)
               .join(' ');
       }
   }

@@ -230,11 +230,34 @@ bot.on('message', async (msg) => {
     
     const userId = String(msg.from.id);
     const text = msg.text || '';
-    const lines = text.split('\n');
-    
-    for (const line of lines) {
-        const lower = line.trim().toLowerCase();
-        if (!lower) continue;
+    const initialLines = text.split('\n');
+    let finalParts = [];
+
+    // 1. Split by lines first, then by smart detection
+    for (const line of initialLines) {
+        if (!line.trim()) continue;
+
+        // Check if the line contains a "total" command - don't split these
+        if (line.toLowerCase().startsWith('total') || line.toLowerCase() === 'summary') {
+            finalParts.push(line.trim());
+            continue;
+        }
+
+        // Smart Split: detect multiple amount patterns in one line
+        // Regex: [Amount Sign? Value? Descriptor?] [Any text] followed by [Next Amount Sign? Value] or [End]
+        const smartRegex = /(?:(?:₹|rs\.?|\$)?\s*\d+(?:\.\d{1,2})?\s*(?:rupees|rs|dollars|bucks)?\s*.+?)(?=(?:(?:₹|rs\.?|\$)?\s*\d+)|$)/gi;
+        const matches = line.match(smartRegex);
+
+        if (matches && matches.length > 1) {
+            finalParts.push(...matches.map(m => m.trim()));
+        } else {
+            finalParts.push(line.trim());
+        }
+    }
+
+    // 2. Process all detected parts
+    for (const part of finalParts) {
+        const lower = part.toLowerCase();
 
         // Summary request
         if (lower.startsWith('total') || lower === 'summary') {
@@ -242,19 +265,19 @@ bot.on('message', async (msg) => {
             getDetailedSummary(userId, range, (reply) => {
                 bot.sendMessage(msg.chat.id, reply, { parse_mode: 'Markdown' });
             });
-            continue; // Move to next line if any
+            continue;
         }
 
         // Must have a number to be an expense
         if (!/\d/.test(lower)) continue;
 
-        const parsed = parseText(line);
+        const parsed = parseText(part);
         const groupId = msg.chat.type !== 'private' ? String(msg.chat.id) : null;
 
         if (parsed.amount > 0) {
             saveExpense(userId, parsed.amount, parsed.category, parsed.date, parsed.description, groupId, async (err, id) => {
                 if (err) {
-                    bot.sendMessage(msg.chat.id, `❌ Failed to save: "${line}"`);
+                    bot.sendMessage(msg.chat.id, `❌ Failed to save: "${part}"`);
                 } else {
                     // Send confirmation WITH the Undo inline button
                     await bot.sendMessage(msg.chat.id,
