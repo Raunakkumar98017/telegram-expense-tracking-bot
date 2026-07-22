@@ -1,196 +1,407 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyKhataBot — Your AI-Powered Telegram Expense Tracker</title>
-    <meta name="description" content="Track expenses, split bills with roommates, get AI-powered financial advice in Hinglish. All inside Telegram.">
+    <title>ExpenseBot — Your Personal Finance Assistant on Telegram</title>
+    <meta name="description"
+        content="Track expenses, get smart summaries, set budgets, split bills with friends and get AI-powered financial roasts — all inside Telegram.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
 
-    <!-- Animated particle canvas -->
-    <canvas id="particles"></canvas>
+<body>
 
     <!-- NAVBAR -->
     <nav class="navbar" id="navbar">
-        <div class="nav-brand">💸 MyKhataBot</div>
+        <div class="nav-brand">
+            <div class="nav-logo">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                    <rect width="28" height="28" rx="8" fill="#6c47ff" />
+                    <path d="M8 10h12M8 14h8M8 18h10" stroke="white" stroke-width="2" stroke-linecap="round" />
+                    <circle cx="20" cy="8" r="3" fill="#a78bfa" />
+                    <path d="M19 8l1 1 2-2" stroke="white" stroke-width="1.2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+            </div>
+            <span>ExpenseBot</span>
+        </div>
         <div class="nav-links">
             <a href="#features">Features</a>
-            <a href="#demo">Demo</a>
             <a href="#how-it-works">How It Works</a>
+            <a href="#why-us">Why Us</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#faq">FAQ</a>
         </div>
-        <a href="https://t.me/MyKhataBot" target="_blank" class="btn btn-nav">Open in Telegram ✈️</a>
+        <div class="nav-actions">
+            <a href="https://t.me/ExpenseBot" target="_blank" class="btn btn-telegram">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+                </svg>
+                Try the Bot
+            </a>
+            <a href="https://t.me/ExpenseBot" target="_blank" class="btn btn-primary">Get Started</a>
+        </div>
     </nav>
 
     <!-- HERO SECTION -->
     <section class="hero" id="home">
-        <div class="hero-content">
-            <div class="hero-badge reveal">🤖 AI-Powered Finance</div>
-            <h1 class="hero-title reveal">
-                Stop Forgetting <br>
-                <span class="gradient-text">Where Your Money Went.</span>
-            </h1>
-            <p class="hero-subtitle reveal">
-                MyKhataBot is your personal finance assistant, living right inside Telegram.
-                Track expenses in seconds, split bills with roommates, and get roasted by AI for overspending.
-            </p>
-            <div class="hero-cta reveal">
-                <a href="https://t.me/MyKhataBot" target="_blank" class="btn btn-primary">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.820 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-                    Start Tracking Free
-                </a>
-                <a href="#features" class="btn btn-outline">Explore Features →</a>
+        <div class="hero-left">
+            <div class="hero-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <rect width="24" height="24" rx="6" fill="#6c47ff" opacity="0.15" />
+                    <path d="M8 10h8M8 14h5" stroke="#6c47ff" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                Your Personal Finance Assistant on Telegram
             </div>
-            <div class="hero-stats reveal">
-                <div class="stat"><span class="stat-num">100%</span><span class="stat-label">Free</span></div>
-                <div class="stat-divider"></div>
-                <div class="stat"><span class="stat-num">24/7</span><span class="stat-label">Always Online</span></div>
-                <div class="stat-divider"></div>
-                <div class="stat"><span class="stat-num">AI</span><span class="stat-label">Powered</span></div>
+
+            <h1 class="hero-title">
+                Track expenses.<br>
+                <span class="hero-accent">Get insights.</span><br>
+                Stay in control.
+            </h1>
+
+            <p class="hero-subtitle">
+                ExpenseBot helps you track your spending in natural language, set budgets, get smart summaries, and even
+                receive AI-powered financial roasts 😎
+            </p>
+
+            <div class="hero-cta">
+                <a href="https://t.me/ExpenseBot" target="_blank" class="btn btn-primary btn-hero">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+                    </svg>
+                    Start on Telegram
+                </a>
+                <a href="#how-it-works" class="btn btn-ghost btn-hero">
+                    <span class="play-icon">▶</span>
+                    See How It Works
+                </a>
+            </div>
+
+            <div class="hero-trust">
+                <div class="trust-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2L3 7v5c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V7l-9-5z" stroke="#6c47ff"
+                            stroke-width="2" fill="none" />
+                    </svg>
+                    Secure &amp; Private
+                </div>
+                <div class="trust-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="#f59e0b" stroke-width="2" fill="none" />
+                    </svg>
+                    Fast &amp; Smart
+                </div>
+                <div class="trust-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="#22c55e" stroke-width="2"
+                            fill="none" />
+                    </svg>
+                    Backed by Supabase
+                </div>
             </div>
         </div>
-        <div class="hero-visual reveal">
-            <div class="phone-mockup">
-                <div class="phone-frame">
-                    <div class="chat-demo" id="chat-demo">
-                        <div class="chat-msg user">spent 200 on lunch</div>
-                        <div class="chat-msg bot">
-                            ✅ <strong>Expense Saved!</strong><br>
-                            💰 Amount: ₹200.00<br>
-                            📂 Category: Food<br>
-                            <button class="undo-btn">↩️ Undo</button>
+
+        <div class="hero-right">
+            <!-- Left Feature Cards -->
+            <div class="feature-float feature-float-left">
+                <div class="float-card">
+                    <div class="float-icon float-icon-purple">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <rect x="3" y="3" width="18" height="18" rx="3" stroke="#6c47ff" stroke-width="2" />
+                            <path d="M7 12h10M7 8h10M7 16h6" stroke="#6c47ff" stroke-width="1.5"
+                                stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="float-title">Smart</div>
+                        <div class="float-title">Summaries</div>
+                    </div>
+                </div>
+                <div class="float-card">
+                    <div class="float-icon float-icon-green">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="9" stroke="#22c55e" stroke-width="2" />
+                            <path d="M9 12l2 2 4-4" stroke="#22c55e" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="float-title">Budget</div>
+                        <div class="float-title">Tracking</div>
+                    </div>
+                </div>
+                <div class="float-card">
+                    <div class="float-icon float-icon-pink">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="#ec4899" stroke-width="2" />
+                            <circle cx="9" cy="7" r="4" stroke="#ec4899" stroke-width="2" />
+                            <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="#ec4899" stroke-width="2"
+                                stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="float-title">Split &amp; Settle</div>
+                        <div class="float-title">with Friends</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phone Mockup -->
+            <div class="phone-mockup-wrapper">
+                <div class="phone-mockup">
+                    <div class="phone-notch"></div>
+                    <div class="phone-screen">
+                        <!-- Telegram Chat UI -->
+                        <div class="tg-header">
+                            <div class="tg-back">&#8249;</div>
+                            <div class="tg-info">
+                                <div class="tg-avatar">E</div>
+                                <div>
+                                    <div class="tg-name">ExpenseBot</div>
+                                    <div class="tg-status">bot</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="chat-msg user">/roast</div>
-                        <div class="chat-msg bot typing-indicator" id="typing">
-                            <span></span><span></span><span></span>
+                        <div class="tg-chat">
+                            <div class="tg-date-label">Spent 200 on lunch</div>
+                            <div class="tg-msg tg-user">Spent 200 on lunch</div>
+                            <div class="tg-msg tg-bot">
+                                <div class="tg-time">11:52 AM ✓✓</div>
+                                ✅ <strong>Logged!</strong><br>
+                                Amount: ₹200<br>
+                                Category: Food<br>
+                                Note: lunch<br>
+                                Date: Today
+                            </div>
+                            <div class="tg-msg tg-user tg-user-small">Show recent</div>
+                            <div class="tg-time-right">11:53 AM</div>
+                            <div class="tg-msg tg-bot">
+                                <strong>📋 Recent Expenses</strong><br>
+                                • ₹200 – Food – Lunch<br>
+                                • ₹450 – Grocery – BigBasket<br>
+                                • ₹120 – Transport – Auto<br>
+                                • ₹300 – Coffee – Starbucks
+                            </div>
+                            <div class="tg-msg tg-user tg-user-small">This month summary</div>
+                            <div class="tg-time-right">11:55 AM</div>
+                            <div class="tg-msg tg-bot tg-summary">
+                                <strong>📊 This Month Summary</strong><br>
+                                Total Spent: ₹3,570<br>
+                                Top Category: Food (₹1,280)<br>
+                                Daily Avg: ₹119<br>
+                                Budget Used: 71%
+                                <div class="tg-progress">
+                                    <div class="tg-progress-bar"></div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="chat-msg bot hidden" id="roast-msg">
-                            🎭 <strong>Your Financial Shayari:</strong><br><br>
-                            <em>Khaya piya kuch nahi,<br>
-                            Lunch pe ₹200 gaya!<br>
-                            Bhai, wallet rota hai,<br>
-                            Tu khata hi jaya!</em> 😂
+                        <div class="tg-input">
+                            <div class="tg-input-box">Message</div>
+                            <div class="tg-mic">🎤</div>
                         </div>
                     </div>
                 </div>
-                <div class="phone-glow"></div>
+                <div class="handwritten-label">All in your<br>Telegram!</div>
+                <div class="handwritten-arrow">↙</div>
+            </div>
+
+            <!-- Right Feature Cards -->
+            <div class="feature-float feature-float-right">
+                <div class="float-card">
+                    <div class="float-icon float-icon-orange">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path
+                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15v-4H7l5-9v4h4l-5 9z"
+                                fill="#f97316" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="float-title">AI Financial</div>
+                        <div class="float-title">Roasts</div>
+                    </div>
+                </div>
+                <div class="float-card">
+                    <div class="float-icon float-icon-blue">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="#3b82f6"
+                                stroke-width="2" />
+                            <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="#3b82f6" stroke-width="1.5"
+                                stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="float-title">Export as</div>
+                        <div class="float-title">CSV</div>
+                    </div>
+                </div>
+                <div class="float-card">
+                    <div class="float-icon float-icon-violet">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"
+                                stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="float-title">Spending</div>
+                        <div class="float-title">Alerts</div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- FEATURES SECTION -->
-    <section class="features" id="features">
-        <div class="section-header reveal">
-            <span class="section-tag">What Can It Do?</span>
-            <h2>Your Smartest <span class="gradient-text">Financial Companion.</span></h2>
-            <p>Everything you need to manage money — for yourself or your entire hostel group.</p>
+    <section class="features-section" id="features">
+        <div class="section-intro">
+            Everything you need to <span class="accent-text">manage your money better</span>
         </div>
         <div class="features-grid">
-            <div class="feature-card reveal" data-delay="0">
-                <div class="feature-icon">💬</div>
+            <div class="feat-card reveal" data-delay="0">
+                <div class="feat-icon feat-icon-purple">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="#6c47ff"
+                            stroke-width="2" fill="none" />
+                    </svg>
+                </div>
                 <h3>Natural Language Logging</h3>
-                <p>Just type <em>"spent 300 on groceries"</em> and the bot understands. No forms, no buttons.</p>
-                <div class="feature-glow"></div>
+                <p>Just type like you talk. We'll handle the rest.</p>
             </div>
-            <div class="feature-card reveal" data-delay="100">
-                <div class="feature-badge upcoming">🚧 Upcoming</div>
-                <div class="feature-icon">👥</div>
-                <h3>Group Khata</h3>
-                <p>Add the bot to your hostel group. Everyone logs expenses. Type <strong>/split</strong> to see who owes whom — no arguments!</p>
-                <div class="feature-glow"></div>
+            <div class="feat-card reveal" data-delay="80">
+                <div class="feat-icon feat-icon-green">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6" stroke="#22c55e"
+                            stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <h3>Powerful Summaries</h3>
+                <p>Get totals for today, week, month, year or all time.</p>
             </div>
-            <div class="feature-card reveal featured" data-delay="200">
-                <div class="feature-badge">✨ Now Working</div>
-                <div class="feature-icon">🎭</div>
-                <h3>AI Spending Roasts</h3>
-                <p>Type <strong>/roast</strong> for brutally honest, personalized financial feedback. Our AI Shayar will analyze your spending habits with a roast!</p>
-                <div class="feature-glow"></div>
+            <div class="feat-card reveal" data-delay="160">
+                <div class="feat-icon feat-icon-orange">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                        <rect x="3" y="3" width="18" height="18" rx="3" stroke="#f97316" stroke-width="2" />
+                        <path d="M3 9h18M9 21V9" stroke="#f97316" stroke-width="2" />
+                    </svg>
+                </div>
+                <h3>Budget Management</h3>
+                <p>Set monthly budgets and track your progress.</p>
             </div>
-            <div class="feature-card reveal" data-delay="0">
-                <div class="feature-icon">🔥</div>
-                <h3>Burn Rate Alerts</h3>
-                <p>Set a monthly budget. Get warned the moment your spending pace is about to blow the limit.</p>
-                <div class="feature-glow"></div>
+            <div class="feat-card reveal" data-delay="240">
+                <div class="feat-icon feat-icon-pink">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="#ec4899" stroke-width="2" />
+                        <circle cx="9" cy="7" r="4" stroke="#ec4899" stroke-width="2" />
+                        <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="#ec4899" stroke-width="2"
+                            stroke-linecap="round" />
+                    </svg>
+                </div>
+                <h3>Group Expense Splitting</h3>
+                <p>Split bills with friends and keep balance in check.</p>
             </div>
-            <div class="feature-card reveal" data-delay="100">
-                <div class="feature-icon">↩️</div>
-                <h3>One-Tap Undo</h3>
-                <p>Made a mistake? Every expense has an Undo button. Your data is always accurate.</p>
-                <div class="feature-glow"></div>
+            <div class="feat-card reveal" data-delay="320">
+                <div class="feat-icon feat-icon-blue">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="#3b82f6"
+                            stroke-width="2" />
+                        <path d="M14 2v6h6" stroke="#3b82f6" stroke-width="2" />
+                    </svg>
+                </div>
+                <h3>Export &amp; Reports</h3>
+                <p>Download your expenses as clean CSV files.</p>
             </div>
-            <div class="feature-card reveal" data-delay="200">
-                <div class="feature-icon">📊</div>
-                <h3>CSV Export</h3>
-                <p>Download all your expenses as a spreadsheet with <strong>/export</strong>. Total control over your data.</p>
-                <div class="feature-glow"></div>
+            <div class="feat-card reveal" data-delay="400">
+                <div class="feat-icon feat-icon-yellow">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="#f59e0b" stroke-width="2" />
+                        <path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01" stroke="#f59e0b" stroke-width="2"
+                            stroke-linecap="round" />
+                    </svg>
+                </div>
+                <h3>AI Financial Roasts</h3>
+                <p>Get fun, witty (and slightly painful) money roasts 😂</p>
             </div>
         </div>
     </section>
 
-    <!-- HOW IT WORKS -->
-    <section class="how-it-works" id="how-it-works">
-        <div class="section-header reveal">
-            <span class="section-tag">Simple Setup</span>
-            <h2>Up and Running in <span class="gradient-text">30 Seconds.</span></h2>
+    <!-- FOOTER BAR -->
+    <section class="footer-bar" id="why-us">
+        <div class="footer-bar-item">
+            <div class="footer-bar-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L3 7v5c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V7l-9-5z" stroke="#6c47ff"
+                        stroke-width="2" fill="none" />
+                </svg>
+            </div>
+            <div class="footer-bar-content">
+                <strong>Your data is safe with us.</strong>
+                <p>We use industry-standard security and Supabase to protect your data.</p>
+            </div>
         </div>
-        <div class="steps-container">
-            <div class="step reveal" data-delay="0">
-                <div class="step-number">01</div>
-                <div class="step-content">
-                    <h3>Open Telegram</h3>
-                    <p>Search for <strong>@MyKhataBot</strong> in the Telegram search bar or click the link below.</p>
+        <div class="footer-bar-divider"></div>
+        <div class="footer-bar-item footer-bar-center">
+            <div class="footer-stack-label">Built with modern &amp; reliable stack -</div>
+            <div class="footer-stack">
+                <div class="stack-item">
+                    <div class="stack-logo stack-node">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#339933">
+                            <path
+                                d="M12 1.85c-.27 0-.55.07-.78.2L3.78 6.35C3.29 6.6 3 7.1 3 7.65v8.71c0 .55.29 1.05.78 1.3l7.44 4.29c.23.13.51.2.78.2.27 0 .55-.07.78-.2l7.44-4.29c.49-.25.78-.75.78-1.3V7.65c0-.55-.29-1.05-.78-1.3L12.78 2.05c-.23-.13-.51-.2-.78-.2z" />
+                        </svg>
+                    </div>
+                    Node.js
+                </div>
+                <div class="stack-item">
+                    <div class="stack-logo stack-express">Ex</div>
+                    Express.js
+                </div>
+                <div class="stack-item">
+                    <div class="stack-logo stack-telegram">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                            <path
+                                d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+                        </svg>
+                    </div>
+                    Telegram API
+                </div>
+                <div class="stack-item">
+                    <div class="stack-logo stack-supabase">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path
+                                d="M11.9 1.036c-.015-.986-1.26-1.41-1.874-.637L.764 12.05C.113 12.888.697 14.1 1.75 14.1h9.59a.414.414 0 01.414.413l.012 8.45c.015.987 1.26 1.41 1.874.638l9.262-11.653c.651-.837.067-2.05-.986-2.05h-9.59a.414.414 0 01-.413-.413l-.013-8.45z"
+                                fill="#3ecf8e" />
+                        </svg>
+                    </div>
+                    Supabase
+                </div>
+                <div class="stack-item">
+                    <div class="stack-logo stack-groq">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#gray">
+                            <circle cx="12" cy="12" r="10" stroke="#374151" stroke-width="2" fill="none" />
+                            <path d="M12 6v6l4 2" stroke="#374151" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    Groq / OpenAI
                 </div>
             </div>
-            <div class="step-connector reveal"></div>
-            <div class="step reveal" data-delay="150">
-                <div class="step-number">02</div>
-                <div class="step-content">
-                    <h3>Type /start</h3>
-                    <p>Say hello! The bot will greet you and explain all its commands.</p>
-                </div>
+        </div>
+        <div class="footer-bar-divider"></div>
+        <div class="footer-bar-item footer-bar-right">
+            <div class="footer-bar-loved">Loved by early users ❤️</div>
+            <div class="footer-stars">
+                ★★★★★
             </div>
-            <div class="step-connector reveal"></div>
-            <div class="step reveal" data-delay="300">
-                <div class="step-number">03</div>
-                <div class="step-content">
-                    <h3>Just Type Naturally</h3>
-                    <p>Say <em>"spent 500 on electricity"</em> and you're tracking expenses already!</p>
-                </div>
-            </div>
+            <div class="footer-rating">4.9/5 based on 120+ users</div>
         </div>
     </section>
-
-    <!-- TESTIMONIALS / CTA -->
-    <section class="cta-section" id="demo">
-        <div class="cta-card reveal">
-            <div class="cta-content">
-                <h2>Ready to take control <br>of your finances? 💸</h2>
-                <p>Join thousands of students and hostel groups already using MyKhataBot. It's completely free, forever.</p>
-                <a href="https://t.me/MyKhataBot" target="_blank" class="btn btn-primary btn-large">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.820 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-                     Launch MyKhataBot Now →
-                </a>
-            </div>
-            <div class="cta-emoji-wall">
-                <span>💸</span><span>📊</span><span>🎭</span>
-                <span>👥</span><span>🔥</span><span>✅</span>
-                <span>📈</span><span>🤖</span><span>💰</span>
-            </div>
-        </div>
-    </section>
-
-    <!-- FOOTER -->
-    <footer class="footer">
-        <div class="footer-brand">💸 MyKhataBot</div>
-        <p>Built with ❤️ for broke students everywhere.</p>
-        <div class="footer-links">
-            <a href="https://t.me/MyKhataBot" target="_blank">Open Bot</a>
-        </div>
-    </footer>
 
     <script src="main.js"></script>
 </body>
+
 </html>
