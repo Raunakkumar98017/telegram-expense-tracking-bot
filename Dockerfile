@@ -14,5 +14,5 @@ COPY . .
 # Expose the health check port
 EXPOSE 3000
 
-# Start the Telegram bot
-CMD ["node", "bot.js"]
+# Start the Telegram bot & server
+CMD ["node", "src/bot.js"]
