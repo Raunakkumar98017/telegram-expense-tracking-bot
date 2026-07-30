@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExpenseBot — AI Expense Dashboard</title>
+    <meta name="description" content="Personal AI Finance Dashboard for ExpenseBot on Telegram. Track expenses, burn rate, AI insights, and heatmaps.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+
+    <div class="full-dashboard-container">
+        <!-- TOP FULL-WIDTH NAVBAR -->
+        <header class="redesigned-header">
+            <div class="header-main-row">
+                <!-- Left: Brand & Welcome -->
+                <div class="brand-welcome-group">
+                    <div class="header-bot-logo">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="brand-greeting-text">
+                        <div class="brand-title-line">
+                            <h2>ExpenseBot</h2>
+                            <span class="bot-status-tag"><span class="green-dot"></span> Online</span>
+                        </div>
+                        <p class="greeting-subtitle">Welcome back, <span id="user-greeting-name">User</span> 👋 &nbsp;•&nbsp; <em>"Track today, secure tomorrow."</em></p>
+                    </div>
+                </div>
+
+                <!-- Right: Action Controls -->
+                <div class="header-actions-group">
+                    <div class="date-range-badge">
+                        <i class="fa-regular fa-calendar-days"></i>
+                        <span id="current-month-range">May 1 – May 31, 2026</span>
+                    </div>
+
+                    <a href="https://t.me/MyKhataBot" target="_blank" class="btn-tg-primary">
+                        <i class="fa-brands fa-telegram"></i> Open Telegram Bot
+                    </a>
+
+                    <div class="profile-chip">
+                        <div class="chip-avatar">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div class="chip-details">
+                            <span class="chip-name" id="user-profile-name">User</span>
+                            <span class="chip-id">ID: 86328583</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN DASHBOARD CONTENT -->
+        <main class="main-content" id="dashboard-export-area">
+
+            <!-- 5 KPI CARDS ROW -->
+            <section class="kpi-row" id="overview">
+                <!-- 1. Total Spent -->
+                <div class="kpi-card">
+                    <div class="kpi-icon-box purple">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Total Spent</span>
+                        <h3 id="kpi-total-spent">₹0.00</h3>
+                        <span class="kpi-badge badge-up" id="kpi-spent-trend"><i class="fa-solid fa-arrow-up"></i> 12.5% vs last mth</span>
+                    </div>
+                </div>
+
+                <!-- 2. Budget Left -->
+                <div class="kpi-card">
+                    <div class="kpi-icon-box green">
+                        <i class="fa-solid fa-sack-dollar"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Budget Left</span>
+                        <h3 id="kpi-budget-left">₹0.00</h3>
+                        <span class="kpi-subtext" id="kpi-budget-pct">0% of ₹5,000</span>
+                        <div class="mini-progress-bar">
+                            <div class="progress-fill" id="kpi-budget-progress" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Today's Spend -->
+                <div class="kpi-card">
+                    <div class="kpi-icon-box blue">
+                        <i class="fa-solid fa-calendar-day"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Today's Spend</span>
+                        <h3 id="kpi-today-spend">₹0.00</h3>
+                        <span class="kpi-badge badge-down" id="kpi-today-trend"><i class="fa-solid fa-arrow-down"></i> 8.3% vs Yesterday</span>
+                    </div>
+                </div>
+
+                <!-- 4. Transactions -->
+                <div class="kpi-card">
+                    <div class="kpi-icon-box orange">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Transactions</span>
+                        <h3 id="kpi-tx-count">0</h3>
+                        <span class="kpi-subtext">This Month</span>
+                    </div>
+                </div>
+
+                <!-- 5. Current Streak -->
+                <div class="kpi-card">
+                    <div class="kpi-icon-box red">
+                        <i class="fa-solid fa-fire"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <span class="kpi-label">Current Streak</span>
+                        <h3 id="kpi-streak-days">0 Days</h3>
+                        <span class="kpi-subtext orange-text">Keep it up! 🔥</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MIDDLE ROW (CHARTS & BURN RATE) -->
+            <section class="grid-three">
+                <!-- Expenses by Category (Donut Chart) -->
+                <div class="dash-card">
+                    <div class="card-top">
+                        <h3>Expenses by Category</h3>
+                        <select class="card-select">
+                            <option>This Month</option>
+                            <option>Last Month</option>
+                        </select>
+                    </div>
+                    <div class="donut-chart-wrapper">
+                        <div class="donut-canvas-box">
+                            <canvas id="categoryDonutChart"></canvas>
+                        </div>
+                        <div class="donut-legend-list" id="donut-legend-container">
+                            <!-- Dynamic Legend Items -->
+                        </div>
+                    </div>
+                    <div class="card-bottom-total">
+                        Total <strong id="donut-total-val">₹0.00</strong>
+                    </div>
+                </div>
+
+                <!-- Monthly Spending Trend (Curved Line Chart) -->
+                <div class="dash-card">
+                    <div class="card-top">
+                        <h3>Monthly Spending Trend</h3>
+                        <select class="card-select">
+                            <option>This Year</option>
+                        </select>
+                    </div>
+                    <div class="line-chart-wrapper">
+                        <canvas id="trendAreaChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Burn Rate (Semi-Circle Gauge) -->
+                <div class="dash-card" id="budget">
+                    <div class="card-top">
+                        <h3>Burn Rate</h3>
+                    </div>
+                    <div class="gauge-card-body">
+                        <div class="gauge-semi-wrapper">
+                            <canvas id="burnRateGaugeCanvas"></canvas>
+                            <div class="gauge-center-text">
+                                <span class="gauge-val" id="gauge-percent-text">0%</span>
+                                <span class="gauge-status" id="gauge-status-sub">On Track</span>
+                            </div>
+                        </div>
+                        <div class="gauge-metrics-row">
+                            <div class="g-metric">
+                                <span>Monthly Budget</span>
+                                <strong id="gauge-monthly-budget">₹5,000</strong>
+                            </div>
+                            <div class="g-metric">
+                                <span>Projected Spend</span>
+                                <strong id="gauge-projected-spend">₹0</strong>
+                            </div>
+                            <div class="g-metric">
+                                <span>Daily Avg Spend</span>
+                                <strong id="gauge-daily-avg">₹0.00</strong>
+                            </div>
+                        </div>
+                        <div class="gauge-banner green-banner" id="gauge-verdict-banner">
+                            <i class="fa-solid fa-circle-check"></i> You're on track to meet your budget!
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- LOWER MIDDLE ROW (HEATMAP, AI INSIGHTS, PERSONALITY) -->
+            <section class="grid-three">
+                <!-- Spending Heatmap Calendar -->
+                <div class="dash-card" id="heatmap">
+                    <div class="card-top">
+                        <h3>Spending Heatmap <i class="fa-solid fa-circle-info tooltip-icon" title="Daily spending threshold colors"></i></h3>
+                        <select class="card-select">
+                            <option>May 2026</option>
+                        </select>
+                    </div>
+                    <div class="heatmap-calendar-box">
+                        <div class="hm-day-names">
+                            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                        </div>
+                        <div class="hm-dates-grid" id="heatmap-calendar-dates">
+                            <!-- Dynamic Calendar Date Circles -->
+                        </div>
+                        <div class="hm-footer-legend">
+                            <span><span class="hm-dot green"></span> &lt; ₹200</span>
+                            <span><span class="hm-dot yellow"></span> ₹200 – ₹500</span>
+                            <span><span class="hm-dot red"></span> &gt; ₹500</span>
+                            <span><span class="hm-dot gray"></span> No Data</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Insights - Weekly Report -->
+                <div class="dash-card" id="reports">
+                    <div class="card-top">
+                        <h3>AI Insights – Weekly Report</h3>
+                    </div>
+                    <div class="report-stats-grid">
+                        <div class="rep-stat">
+                            <span>Total Spent</span>
+                            <strong id="rep-total-spent">₹0.00</strong>
+                        </div>
+                        <div class="rep-stat">
+                            <span>Highest Category</span>
+                            <strong id="rep-highest-cat">Food & Dining</strong>
+                        </div>
+                        <div class="rep-stat">
+                            <span>Top Expense</span>
+                            <strong id="rep-top-exp">Swiggy Order</strong>
+                        </div>
+                        <div class="rep-stat">
+                            <span>Budget Used</span>
+                            <strong id="rep-budget-used">0%</strong>
+                        </div>
+                    </div>
+                    <div class="ai-bot-speech-card">
+                        <div class="speech-quote-content">
+                            <p id="ai-speech-text">"This week Swiggy loved you more than your wallet 😂😂 Try cooking at home 2–3 times!"</p>
+                            <span class="speech-author">– ExpenseBot AI</span>
+                        </div>
+                        <div class="bot-avatar-graphic">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial Personality -->
+                <div class="dash-card" id="personality">
+                    <div class="card-top">
+                        <h3>Financial Personality</h3>
+                    </div>
+                    <div class="personality-card-body">
+                        <div class="p-hero-row">
+                            <div class="p-hero-icon" id="p-hero-emoji">🦁</div>
+                            <div class="p-hero-text">
+                                <h4 id="p-hero-title">Big Spender</h4>
+                                <p id="p-hero-desc">You love experiences and don't mind spending on what you enjoy!</p>
+                            </div>
+                        </div>
+                        <div class="p-analysis-grid">
+                            <div class="p-box box-green">
+                                <h5>Strengths</h5>
+                                <p id="p-strengths-text">Generous<br>Loves life</p>
+                            </div>
+                            <div class="p-box box-red">
+                                <h5>Watch out for</h5>
+                                <p id="p-weakness-text">Impulse buys<br>High food spend</p>
+                            </div>
+                            <div class="p-box box-blue">
+                                <h5>Recommendation</h5>
+                                <p id="p-recom-text">Set weekly limits<br>Track small spends</p>
+                            </div>
+                        </div>
+                        <div class="p-footer-note">
+                            <i class="fa-regular fa-clock"></i> Next update in 7 days
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BOTTOM ROW (TRANSACTIONS, RECEIPTS, EXPORT CENTER) -->
+            <section class="grid-three">
+                <!-- Recent Transactions Table -->
+                <div class="dash-card" id="transactions">
+                    <div class="card-top">
+                        <h3>Recent Transactions</h3>
+                    </div>
+                    <div class="table-container">
+                        <table class="tx-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tx-rows-container">
+                                <tr><td colspan="4" class="text-center">Loading transactions...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Receipts Gallery -->
+                <div class="dash-card" id="receipts">
+                    <div class="card-top">
+                        <h3>Receipts Gallery</h3>
+                    </div>
+                    <div class="receipts-horizontal-scroll" id="receipts-gallery-scroll">
+                        <!-- Dynamic Receipt Paper Cards -->
+                    </div>
+                </div>
+
+                <!-- Export Center -->
+                <div class="dash-card export-card-bg" id="export">
+                    <div class="card-top">
+                        <h3>Export Center</h3>
+                    </div>
+                    <p class="export-desc">Download your data in your preferred format.</p>
+                    <div class="export-btn-group">
+                        <button class="btn-exp green-exp" id="btn-export-csv">
+                            <i class="fa-solid fa-file-csv"></i> Export as CSV
+                        </button>
+                        <button class="btn-exp red-exp" id="btn-export-pdf">
+                            <i class="fa-solid fa-file-pdf"></i> Export as PDF
+                        </button>
+                    </div>
+                    <span class="export-footer-text">All exports include summary & detailed transactions.</span>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+
+</html>

@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const { supabase } = require('./db');
 
-// Start dates for different timeframes
 function getTimeframeBounds(timeframe) {
     const now = new Date();
     let startDate = '1970-01-01';
@@ -26,7 +25,6 @@ function getTimeframeBounds(timeframe) {
 async function generateCSV(userId, timeframe, callback) {
     const { startDate, endDate } = getTimeframeBounds(timeframe);
 
-    // Fetch expenses
     const { data: expenses, error: errExp } = await supabase
         .from('expenses')
         .select('*')
@@ -38,24 +36,22 @@ async function generateCSV(userId, timeframe, callback) {
     if (errExp) return callback(errExp, null);
     if (!expenses || expenses.length === 0) return callback(new Error("No expenses found."), null);
 
-    // Fetch budget 
     const { data: bData } = await supabase.from('budgets').select('amount').eq('userId', userId).single();
     const budget = bData ? bData.amount : null;
-
-    // Calculate total
     const totalSpent = expenses.reduce((acc, r) => acc + r.amount, 0);
 
     const sanitizedUser = userId.replace(/[^a-z0-9]/gi, '_');
-    const csvPath = path.join(__dirname, `expenses_${sanitizedUser}_${timeframe}.csv`);
+    const tempDir = path.join(__dirname, '..', 'tmp');
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+
+    const csvPath = path.join(tempDir, `expenses_${sanitizedUser}_${timeframe}.csv`);
     
-    // We'll write the CSV manually to include the summary at the top
     const lines = [];
     lines.push(`Export Timeframe: ${timeframe}`);
     lines.push(`Total Spent: ₹${totalSpent.toFixed(2)}`);
     if (budget) lines.push(`Monthly Budget: ₹${budget.toFixed(2)}`);
-    lines.push(''); // Blank row
+    lines.push('');
     
-    // Data rows
     const headers = ["ID", "Date", "Amount", "Category", "Description"];
     lines.push(headers.join(','));
     

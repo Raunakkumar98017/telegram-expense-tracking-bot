@@ -7,8 +7,12 @@ async function saveExpense(userId, amount, category, date, description, groupId,
         .from('expenses')
         .insert([{ userId, amount, category, date, description, groupId }])
         .select();
-    if (error) return callback(error);
-    callback(null, data[0].id);
+    if (error) {
+        if (callback) return callback(error);
+        throw error;
+    }
+    if (callback) callback(null, data[0].id);
+    return data[0].id;
 }
 
 async function deleteExpense(userId, expenseId, callback) {
@@ -17,7 +21,8 @@ async function deleteExpense(userId, expenseId, callback) {
         .delete()
         .eq('id', expenseId)
         .eq('userId', userId);
-    callback(error);
+    if (callback) callback(error);
+    return error;
 }
 
 async function getDetailedSummary(userId, range, callback) {
@@ -41,7 +46,10 @@ async function getDetailedSummary(userId, range, callback) {
         .eq('userId', userId)
         .gte('date', startDate);
     
-    if (error) return callback("❌ Cloud Error.");
+    if (error) {
+        if (callback) return callback("❌ Cloud Error.");
+        throw error;
+    }
     
     const total = rawData.reduce((acc, r) => acc + r.amount, 0);
     const catMap = {};
@@ -54,12 +62,19 @@ async function getDetailedSummary(userId, range, callback) {
             reply += `\n- ${cat}: ₹${amt.toFixed(2)}`;
         });
     }
-    callback(reply);
+    if (callback) callback(reply);
+    return { total, catMap, reply };
 }
 
 async function getMonthSpend(userId) {
     const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
     const { data } = await supabase.from('expenses').select('amount').eq('userId', userId).gte('date', startDate);
+    return data ? data.reduce((acc, r) => acc + r.amount, 0) : 0;
+}
+
+async function getTodaySpend(userId) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const { data } = await supabase.from('expenses').select('amount').eq('userId', userId).eq('date', todayStr);
     return data ? data.reduce((acc, r) => acc + r.amount, 0) : 0;
 }
 
@@ -69,40 +84,106 @@ async function getWeeklySummaryText(userId) {
     const diff = now.getDate() - day + (day === 0 ? -6 : 1);
     const startDate = new Date(now.setDate(diff)).toISOString().split('T')[0];
 
-    const { data } = await supabase.from('expenses').select('category, amount').eq('userId', userId).gte('date', startDate);
-    if (!data || data.length === 0) return 'No expenses this week.';
+    const { data } = await supabase.from('expenses').select('category, amount, description').eq('userId', userId).gte('date', startDate);
+    if (!data || data.length === 0) return 'No expenses logged this week.';
     const total = data.reduce((acc, r) => acc + r.amount, 0);
     const catMap = {};
     data.forEach(r => { catMap[r.category] = (catMap[r.category] || 0) + r.amount; });
-    let text = `Total: ₹${total.toFixed(2)}\n`;
-    Object.entries(catMap).forEach(([cat, amt]) => { text += `${cat}: ₹${amt.toFixed(2)}\n`; });
+    let text = `Total: ₹${total.toFixed(2)}\nCategories:\n`;
+    Object.entries(catMap).forEach(([cat, amt]) => { text += `- ${cat}: ₹${amt.toFixed(2)}\n`; });
     return text;
 }
 
 async function getRecentText(userId, callback) {
     const { data, error } = await supabase.from('expenses').select('*').eq('userId', userId).order('date', { ascending: false }).order('id', { ascending: false }).limit(5);
-    if (error) return callback("❌ Cloud Error.");
-    if (!data || data.length === 0) return callback("No expenses yet! Try: _spent 200 on lunch_");
+    if (error) {
+        if (callback) return callback("❌ Cloud Error.");
+        throw error;
+    }
+    if (!data || data.length === 0) {
+        const msg = "No expenses yet! Try: _spent 200 on lunch_";
+        if (callback) return callback(msg);
+        return msg;
+    }
     let reply = "*📝 Recent Expenses:*\n";
     data.forEach(row => { reply += `• ₹${row.amount.toFixed(2)} - ${row.category} (${row.date})\n  _${row.description}_\n`; });
-    callback(reply);
+    if (callback) callback(reply);
+    return reply;
+}
+
+async function getAllExpenses(userId, limit = 50) {
+    const query = supabase.from('expenses').select('*');
+    if (userId) query.eq('userId', userId);
+    const { data } = await query.order('date', { ascending: false }).order('id', { ascending: false }).limit(limit);
+    return data || [];
+}
+
+async function getDailyExpensesMap(userId, days = 30) {
+    const now = new Date();
+    const pastDate = new Date(now.setDate(now.getDate() - days)).toISOString().split('T')[0];
+    const query = supabase.from('expenses').select('date, amount');
+    if (userId) query.eq('userId', userId);
+    const { data } = await query.gte('date', pastDate);
+
+    const dailyMap = {};
+    if (data) {
+        data.forEach(r => {
+            dailyMap[r.date] = (dailyMap[r.date] || 0) + r.amount;
+        });
+    }
+    return dailyMap;
+}
+
+async function getStreak(userId) {
+    const { data } = await supabase.from('expenses').select('date').eq('userId', userId).order('date', { ascending: false });
+    if (!data || data.length === 0) return 0;
+    
+    const uniqueDates = [...new Set(data.map(d => d.date))];
+    let streak = 0;
+    let checkDate = new Date();
+    
+    for (let i = 0; i < 30; i++) {
+        const dateStr = checkDate.toISOString().split('T')[0];
+        if (uniqueDates.includes(dateStr)) {
+            streak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+            // Allow today to be missing if checked early in the morning
+            if (i === 0) {
+                checkDate.setDate(checkDate.getDate() - 1);
+                continue;
+            }
+            break;
+        }
+    }
+    return streak;
+}
+
+async function getUsersList() {
+    const { data } = await supabase.from('expenses').select('userId');
+    if (!data) return [];
+    return [...new Set(data.map(d => d.userId))];
 }
 
 async function clearDatabase(userId, callback) {
-    const { error } = await supabase.from('expenses').delete().eq('userId', userId);
-    callback(error, '?');
+    const { error, count } = await supabase.from('expenses').delete().eq('userId', userId);
+    if (callback) callback(error, count || 0);
+    return { error, count };
 }
 
 // ─── BUDGETS ─────────────────────────────────────────────────────────────────
 
 async function setBudget(userId, amount, callback) {
     const { error } = await supabase.from('budgets').upsert([{ userId, amount, updated_at: new Date().toISOString() }]);
-    callback(error);
+    if (callback) callback(error);
+    return error;
 }
 
 async function getBudget(userId, callback) {
     const { data } = await supabase.from('budgets').select('amount').eq('userId', userId).single();
-    callback(null, data ? data.amount : null);
+    const bAmount = data ? data.amount : null;
+    if (callback) callback(null, bAmount);
+    return bAmount;
 }
 
 async function getGroupSplit(groupId, callback) {
@@ -122,7 +203,7 @@ async function getGroupSplit(groupId, callback) {
     });
 
     const users = Object.keys(totals);
-    const perPerson = grandTotal / users.length;
+    const perPerson = grandTotal / (users.length || 1);
 
     let reply = `👥 *Group Khata Split*\n`;
     reply += `Total Spent: ₹${grandTotal.toFixed(2)}\n`;
@@ -132,10 +213,26 @@ async function getGroupSplit(groupId, callback) {
         const paid = totals[uid];
         const balance = paid - perPerson;
         const status = balance >= 0 ? `gets back ₹${balance.toFixed(2)}` : `owes ₹${Math.abs(balance).toFixed(2)}`;
-        reply += `• <ID:${uid}>: Paid ₹${paid.toFixed(2)} (${status})\n`;
+        reply += `• User <${uid}>: Paid ₹${paid.toFixed(2)} (${status})\n`;
     });
 
     callback(null, reply);
 }
 
-module.exports = { saveExpense, deleteExpense, getDetailedSummary, getRecentText, clearDatabase, setBudget, getBudget, getMonthSpend, getWeeklySummaryText, getGroupSplit };
+module.exports = {
+    saveExpense,
+    deleteExpense,
+    getDetailedSummary,
+    getRecentText,
+    clearDatabase,
+    setBudget,
+    getBudget,
+    getMonthSpend,
+    getTodaySpend,
+    getWeeklySummaryText,
+    getGroupSplit,
+    getAllExpenses,
+    getDailyExpensesMap,
+    getStreak,
+    getUsersList
+};

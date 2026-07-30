@@ -48,7 +48,6 @@ function parseText(input) {
       if (filteredWords.length > 0) {
           category = filteredWords
               .map(word => {
-                  // Remove trailing punctuation like commas, periods, etc.
                   const cleaned = word.replace(/[.,!?;:]+$/, '');
                   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
               })
