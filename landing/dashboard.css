@@ -797,3 +797,124 @@ body {
     margin-top: 12px;
     display: block;
 }
+
+/* ─── MOBILE RESPONSIVE DESIGN (MEDIA QUERIES) ──────────────────────────────── */
+@media (max-width: 768px) {
+    .full-dashboard-container {
+        padding: 12px 12px 24px 12px;
+    }
+
+    .redesigned-header {
+        padding: 14px 14px;
+        margin-bottom: 16px;
+    }
+
+    .header-main-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .brand-welcome-group {
+        width: 100%;
+        gap: 12px;
+    }
+
+    .header-bot-logo {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    .brand-title-line h2 {
+        font-size: 17px;
+    }
+
+    .greeting-subtitle {
+        font-size: 11px;
+    }
+
+    .header-actions-group {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .date-range-badge {
+        grid-column: span 2;
+        justify-content: center;
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+
+    .btn-tg-primary {
+        font-size: 11px;
+        padding: 8px 10px;
+        justify-content: center;
+    }
+
+    .profile-chip {
+        padding: 4px 8px;
+        justify-content: center;
+    }
+
+    .chip-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+
+    .chip-name {
+        font-size: 11px;
+    }
+
+    .chip-id {
+        font-size: 9px;
+    }
+
+    .kpi-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .kpi-card {
+        padding: 14px;
+    }
+
+    .charts-grid, 
+    .grid-2-col, 
+    .grid-3-col {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+
+    .card {
+        padding: 16px 14px;
+    }
+
+    .tx-table-box {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tx-table {
+        min-width: 480px;
+        font-size: 11px;
+    }
+
+    .tx-table th, .tx-table td {
+        padding: 8px 6px;
+    }
+
+    .pers-badge-box {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .pers-hero-emoji {
+        font-size: 32px;
+    }
+}

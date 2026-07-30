@@ -709,7 +709,12 @@ body {
 }
 
 @media (max-width: 600px) {
-    .features-grid { grid-template-columns: 1fr 1fr; }
-    .phone-mockup { width: 200px; }
-    .phone-screen { height: 420px; }
+    .navbar { padding: 0.8rem 4%; }
+    .nav-brand span { display: none; }
+    .features-grid { grid-template-columns: 1fr; }
+    .phone-mockup { width: 100%; max-width: 260px; margin: 0 auto; }
+    .phone-screen { height: 440px; }
+    .hero-title { font-size: 2.2rem; }
+    .hero-cta { flex-direction: column; width: 100%; }
+    .btn-primary, .btn-ghost { width: 100%; justify-content: center; }
 }

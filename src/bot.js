@@ -372,6 +372,20 @@ bot.on('message', async (msg) => {
             continue;
         }
 
+        if (lower.startsWith('budget') || lower.startsWith('set budget') || lower.startsWith('my budget')) {
+            const numMatch = lower.match(/\d+/);
+            if (numMatch) {
+                const amount = parseFloat(numMatch[0]);
+                if (amount > 0) {
+                    setBudget(userId, amount, (err) => {
+                        if (err) return bot.sendMessage(msg.chat.id, '❌ Failed to set budget.');
+                        bot.sendMessage(msg.chat.id, `🎯 *Monthly budget updated to ₹${amount.toLocaleString()}!*`, { parse_mode: 'Markdown' });
+                    });
+                    continue;
+                }
+            }
+        }
+
         if (lower === 'list' || lower === 'recent' || lower === 'history') {
             getRecentText(userId, (reply) => bot.sendMessage(msg.chat.id, reply, { parse_mode: 'Markdown' }));
             continue;

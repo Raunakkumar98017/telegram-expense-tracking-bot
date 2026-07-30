@@ -135,11 +135,11 @@ router.get('/receipts', async (req, res) => {
     try {
         const userId = getUserId(req);
         const expenses = await getAllExpenses(userId, 50);
-        // Filter transactions with store or receipt notes
-        const receipts = expenses.filter(e => e.description && (e.description.toLowerCase().includes('receipt') || e.description.toLowerCase().includes('mart') || e.description.toLowerCase().includes('store') || e.category === 'Groceries'));
+        // Filter ONLY transactions logged via receipt scan
+        const receipts = expenses.filter(e => e.description && (e.description.includes('[Receipt]') || e.description.toLowerCase().includes('receipt')));
         res.json({
             success: true,
-            receipts: receipts.length > 0 ? receipts : expenses.slice(0, 6)
+            receipts: receipts
         });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });

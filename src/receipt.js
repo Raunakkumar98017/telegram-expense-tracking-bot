@@ -26,7 +26,7 @@ async function handleReceiptPhoto(bot, msg) {
         }
 
         const groupId = msg.chat.type !== 'private' ? String(chatId) : null;
-        const note = `${parsed.store ? parsed.store + ' - ' : ''}${parsed.description}`;
+        const note = `[Receipt] ${parsed.store ? parsed.store + ' - ' : ''}${parsed.description}`;
 
         saveExpense(userId, parsed.amount, parsed.category, parsed.date, note, groupId, async (err, expenseId) => {
             if (err) {

@@ -6,15 +6,15 @@ async function getFinancialPersonality(userId) {
     const budget = await getBudget(userId);
     const monthSpend = await getMonthSpend(userId);
 
-    if (!expenses || expenses.length === 0) {
+    if (!expenses || expenses.length < 3) {
         return {
             title: "🌱 The Beginner",
             icon: "🌱",
             description: "You haven't logged enough transactions yet to determine your financial personality.",
             strength: "Clean slate and ready to build good financial habits.",
             weakness: "Limited spending history.",
-            recommendation: "Log your daily expenses for at least a week to unlock your full profile!",
-            formattedText: "🧠 *Financial Personality: 🌱 The Beginner*\n\nLog more expenses to calculate your profile!"
+            recommendation: "Log your daily expenses for at least a few days to unlock your full AI profile!",
+            formattedText: "🧠 *Financial Personality: 🌱 The Beginner*\n\nLog at least 3 expenses over a few days to calculate your profile!"
         };
     }
 
