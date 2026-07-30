@@ -46,14 +46,17 @@ async function analyzeReceipt(base64Image, mimeType = 'image/jpeg') {
         throw new Error('GROQ_API_KEY is missing.');
     }
 
-    const systemPrompt = `You are an expert financial OCR assistant. Analyze the image of a receipt, bill, or invoice.
-Extract the following information as STRICT valid JSON with NO markdown code blocks or extra text:
+    const systemPrompt = `You are an expert financial OCR assistant. Analyze the image of a printed receipt, invoice, bill, or handwritten expense note/chit.
+TASK: Extract or calculate the total amount, main category, store/merchant name, date, and item breakdown.
+If the image is a handwritten note listing multiple items (e.g. "500 Food", "20 Drink", "300 Book"), add up all individual item amounts to calculate the total amount (500 + 20 + 300 = 820).
+
+Respond ONLY with a single valid JSON object matching this structure:
 {
-  "amount": number (total amount paid or due, e.g. 250.50),
-  "category": string (e.g. "Groceries", "Food", "Transport", "Shopping", "Bills", "Health", "General"),
-  "date": string (ISO YYYY-MM-DD or today's date if not visible),
-  "store": string (name of merchant or restaurant),
-  "description": string (short summary, e.g. "Lunch at Dominos" or "Groceries at D-Mart")
+  "amount": 820,
+  "category": "Food",
+  "date": "${new Date().toISOString().split('T')[0]}",
+  "store": "Handwritten Note",
+  "description": "Food 500, Drink 20, Book 300"
 }`;
 
     try {
@@ -64,7 +67,7 @@ Extract the following information as STRICT valid JSON with NO markdown code blo
                 {
                     role: "user",
                     content: [
-                        { type: "text", text: "Extract receipt details into structured JSON." },
+                        { type: "text", text: "Analyze this receipt image and extract total amount and items as JSON." },
                         {
                             type: "image_url",
                             image_url: {
@@ -74,20 +77,27 @@ Extract the following information as STRICT valid JSON with NO markdown code blo
                     ]
                 }
             ],
-            temperature: 0.2,
-            max_tokens: 300,
+            temperature: 0.1,
+            max_tokens: 400,
         });
 
         const rawContent = completion.choices[0].message.content.trim();
-        // Remove potential markdown block wrappers
-        const cleaned = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();
-        const json = JSON.parse(cleaned);
+        console.log('Vision raw output:', rawContent);
+
+        // Extract JSON substring using robust Regex match
+        const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            throw new Error(`Could not parse JSON object from vision output: ${rawContent}`);
+        }
+
+        const json = JSON.parse(jsonMatch[0]);
+
         return {
             amount: parseFloat(json.amount) || 0,
             category: json.category || 'General',
             date: json.date || new Date().toISOString().split('T')[0],
-            store: json.store || 'Merchant',
-            description: json.description || `Purchase at ${json.store || 'Merchant'}`
+            store: json.store || 'Receipt Note',
+            description: json.description || `Receipt Purchase`
         };
     } catch (err) {
         console.error('Groq Vision Receipt Analysis Error:', err.message);
