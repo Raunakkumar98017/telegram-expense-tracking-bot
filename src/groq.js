@@ -38,8 +38,22 @@ async function transcribeAudio(audioBuffer, filename = 'voice.oga') {
     }
 }
 
+function cleanAndParseJson(str) {
+    if (!str) return null;
+    try {
+        const jsonMatch = str.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) return null;
+        let cleaned = jsonMatch[0]
+            .replace(/,\s*\}/g, '}')  // strip trailing commas before }
+            .replace(/,\s*\]/g, ']'); // strip trailing commas before ]
+        return JSON.parse(cleaned);
+    } catch (e) {
+        return null;
+    }
+}
+
 /**
- * Analyzes receipt image using Groq Vision (llama-3.2-11b-vision-preview)
+ * Analyzes receipt image using Penny AI Vision models
  */
 async function analyzeReceipt(base64Image, mimeType = 'image/jpeg') {
     if (!client) {
@@ -50,7 +64,7 @@ async function analyzeReceipt(base64Image, mimeType = 'image/jpeg') {
 TASK: Extract or calculate the total amount, main category, store/merchant name, date, and item breakdown.
 If the image is a handwritten note listing multiple items (e.g. "500 Food", "20 Drink", "300 Book"), add up all individual item amounts to calculate the total amount (500 + 20 + 300 = 820).
 
-Respond ONLY with a single valid JSON object matching this structure:
+Respond ONLY with a single valid JSON object:
 {
   "amount": 820,
   "category": "Food",
@@ -59,50 +73,68 @@ Respond ONLY with a single valid JSON object matching this structure:
   "description": "Food 500, Drink 20, Book 300"
 }`;
 
-    try {
-        const completion = await client.chat.completions.create({
-            model: "llama-3.2-11b-vision-preview",
-            messages: [
-                { role: "system", content: systemPrompt },
-                {
-                    role: "user",
-                    content: [
-                        { type: "text", text: "Analyze this receipt image and extract total amount and items as JSON." },
-                        {
-                            type: "image_url",
-                            image_url: {
-                                url: `data:${mimeType};base64,${base64Image}`
+    const models = ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"];
+    let lastError = null;
+
+    for (const modelName of models) {
+        try {
+            const completion = await client.chat.completions.create({
+                model: modelName,
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    {
+                        role: "user",
+                        content: [
+                            { type: "text", text: "Analyze this receipt image and extract total amount and items as JSON." },
+                            {
+                                type: "image_url",
+                                image_url: {
+                                    url: `data:${mimeType};base64,${base64Image}`
+                                }
                             }
-                        }
-                    ]
+                        ]
+                    }
+                ],
+                temperature: 0.1,
+                max_tokens: 500,
+            });
+
+            const rawContent = completion.choices[0].message.content.trim();
+            console.log(`Vision (${modelName}) output:`, rawContent);
+
+            const json = cleanAndParseJson(rawContent);
+            if (json && (json.amount || json.total)) {
+                const amt = parseFloat(json.amount || json.total) || 0;
+                return {
+                    amount: amt,
+                    category: json.category || 'General',
+                    date: json.date || new Date().toISOString().split('T')[0],
+                    store: json.store || 'Receipt Note',
+                    description: json.description || `Receipt Purchase (₹${amt})`
+                };
+            }
+
+            // Fallback regex if JSON parsing failed but numbers were returned
+            const numMatch = rawContent.match(/(?:total|amount|sum)\D*(\d+(?:\.\d{1,2})?)/i) || rawContent.match(/(\d+(?:\.\d{1,2})?)/);
+            if (numMatch) {
+                const amt = parseFloat(numMatch[1]);
+                if (amt > 0) {
+                    return {
+                        amount: amt,
+                        category: 'General',
+                        date: new Date().toISOString().split('T')[0],
+                        store: 'Handwritten Note',
+                        description: `Scanned Receipt (₹${amt})`
+                    };
                 }
-            ],
-            temperature: 0.1,
-            max_tokens: 400,
-        });
-
-        const rawContent = completion.choices[0].message.content.trim();
-        console.log('Vision raw output:', rawContent);
-
-        // Extract JSON substring using robust Regex match
-        const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            throw new Error(`Could not parse JSON object from vision output: ${rawContent}`);
+            }
+        } catch (err) {
+            console.error(`Vision model ${modelName} error:`, err.message);
+            lastError = err;
         }
-
-        const json = JSON.parse(jsonMatch[0]);
-
-        return {
-            amount: parseFloat(json.amount) || 0,
-            category: json.category || 'General',
-            date: json.date || new Date().toISOString().split('T')[0],
-            store: json.store || 'Receipt Note',
-            description: json.description || `Receipt Purchase`
-        };
-    } catch (err) {
-        console.error('Groq Vision Receipt Analysis Error:', err.message);
-        throw err;
     }
+
+    throw lastError || new Error("Failed to scan receipt image.");
 }
 
 /**
