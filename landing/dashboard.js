@@ -57,6 +57,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('kpi-budget-pct').innerText = `${summary.burnRatePct}% of ₹${summary.budget.toLocaleString()}`;
                 document.getElementById('kpi-budget-progress').style.width = `${Math.min(100, summary.burnRatePct)}%`;
 
+                // Update Total Spent Trend Badge
+                const spentTrendEl = document.getElementById('kpi-spent-trend');
+                if (spentTrendEl) {
+                    if (summary.spentTrendText) {
+                        const iconCls = summary.spentTrendDirection === 'up' ? 'fa-arrow-up' : 'fa-arrow-down';
+                        const badgeCls = summary.spentTrendDirection === 'up' ? 'badge-up' : 'badge-down';
+                        spentTrendEl.className = `kpi-badge ${badgeCls}`;
+                        spentTrendEl.innerHTML = `<i class="fa-solid ${iconCls}"></i> ${summary.spentTrendText}`;
+                    } else {
+                        spentTrendEl.className = 'kpi-subtext';
+                        spentTrendEl.innerText = 'Current Month';
+                    }
+                }
+
+                // Update Today's Spend Trend Badge
+                const todayTrendEl = document.getElementById('kpi-today-trend');
+                if (todayTrendEl) {
+                    if (summary.todayTrendText) {
+                        const iconCls = summary.todayTrendDirection === 'up' ? 'fa-arrow-up' : 'fa-arrow-down';
+                        const badgeCls = summary.todayTrendDirection === 'up' ? 'badge-up' : 'badge-down';
+                        todayTrendEl.className = `kpi-badge ${badgeCls}`;
+                        todayTrendEl.innerHTML = `<i class="fa-solid ${iconCls}"></i> ${summary.todayTrendText}`;
+                    } else {
+                        todayTrendEl.className = 'kpi-subtext';
+                        todayTrendEl.innerText = 'Today\'s Total';
+                    }
+                }
+
                 // Gauge Calculations
                 const projected = summary.totalSpent * 1.25;
                 const dailyAvg = summary.totalSpent / (new Date().getDate() || 1);

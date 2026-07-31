@@ -72,9 +72,25 @@ async function getMonthSpend(userId) {
     return data ? data.reduce((acc, r) => acc + r.amount, 0) : 0;
 }
 
+async function getLastMonthSpend(userId) {
+    const now = new Date();
+    const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
+    const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+    const { data } = await supabase.from('expenses').select('amount').eq('userId', userId).gte('date', firstDayLastMonth).lte('date', lastDayLastMonth);
+    return data ? data.reduce((acc, r) => acc + r.amount, 0) : 0;
+}
+
 async function getTodaySpend(userId) {
     const todayStr = new Date().toISOString().split('T')[0];
     const { data } = await supabase.from('expenses').select('amount').eq('userId', userId).eq('date', todayStr);
+    return data ? data.reduce((acc, r) => acc + r.amount, 0) : 0;
+}
+
+async function getYesterdaySpend(userId) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yestStr = yesterday.toISOString().split('T')[0];
+    const { data } = await supabase.from('expenses').select('amount').eq('userId', userId).eq('date', yestStr);
     return data ? data.reduce((acc, r) => acc + r.amount, 0) : 0;
 }
 
@@ -228,7 +244,9 @@ module.exports = {
     setBudget,
     getBudget,
     getMonthSpend,
+    getLastMonthSpend,
     getTodaySpend,
+    getYesterdaySpend,
     getWeeklySummaryText,
     getGroupSplit,
     getAllExpenses,

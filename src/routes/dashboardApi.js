@@ -3,7 +3,9 @@ const router = express.Router();
 const {
     getAllExpenses,
     getMonthSpend,
+    getLastMonthSpend,
     getTodaySpend,
+    getYesterdaySpend,
     getBudget,
     getStreak,
     getDailyExpensesMap
@@ -27,12 +29,30 @@ router.get('/summary', async (req, res) => {
     try {
         const userId = getUserId(req);
         const monthSpend = await getMonthSpend(userId);
+        const lastMonthSpend = await getLastMonthSpend(userId);
         const todaySpend = await getTodaySpend(userId);
+        const yesterdaySpend = await getYesterdaySpend(userId);
         const budget = (await getBudget(userId)) || 5000;
         const streak = await getStreak(userId);
 
         const budgetLeft = Math.max(0, budget - monthSpend);
         const burnRatePct = Math.min(100, Math.round((monthSpend / budget) * 100));
+
+        let spentTrendText = null;
+        let spentTrendDirection = 'up';
+        if (lastMonthSpend > 0) {
+            const diffPct = (((monthSpend - lastMonthSpend) / lastMonthSpend) * 100).toFixed(1);
+            spentTrendDirection = diffPct >= 0 ? 'up' : 'down';
+            spentTrendText = `${Math.abs(diffPct)}% vs last mth`;
+        }
+
+        let todayTrendText = null;
+        let todayTrendDirection = 'down';
+        if (yesterdaySpend > 0) {
+            const diffPct = (((todaySpend - yesterdaySpend) / yesterdaySpend) * 100).toFixed(1);
+            todayTrendDirection = diffPct >= 0 ? 'up' : 'down';
+            todayTrendText = `${Math.abs(diffPct)}% vs Yesterday`;
+        }
 
         res.json({
             success: true,
@@ -41,7 +61,11 @@ router.get('/summary', async (req, res) => {
             budgetLeft,
             todaySpend,
             streak,
-            burnRatePct
+            burnRatePct,
+            spentTrendText,
+            spentTrendDirection,
+            todayTrendText,
+            todayTrendDirection
         });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
