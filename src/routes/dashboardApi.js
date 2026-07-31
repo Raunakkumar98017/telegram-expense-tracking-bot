@@ -129,8 +129,9 @@ router.get('/expenses', async (req, res) => {
             // UTF-8 BOM so Microsoft Excel opens rupee symbols & formatting perfectly
             let content = '\uFEFFDate,Category,Description,Amount (INR)\n';
             expenses.forEach(e => {
+                const cleanDate = String(e.date || '').split('T')[0];
                 const desc = (e.description || '').replace(/"/g, '""');
-                content += `"${e.date}","${e.category}","${desc}",${e.amount}\n`;
+                content += `"${cleanDate}","${e.category}","${desc}",${e.amount}\n`;
             });
 
             return res.send(content);

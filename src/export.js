@@ -56,9 +56,10 @@ async function generateCSV(userId, timeframe, callback) {
     lines.push(headers.join(','));
     
     expenses.forEach(row => {
+        const cleanDate = String(row.date || '').split('T')[0];
         const line = [
             row.id,
-            row.date,
+            cleanDate,
             row.amount.toFixed(2),
             `"${row.category}"`,
             `"${(row.description || '').replace(/"/g, '""')}"`
