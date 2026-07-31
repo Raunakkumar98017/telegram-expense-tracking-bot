@@ -1136,6 +1136,7 @@ body {
     .footer-bar-divider { width: 80%; height: 1px; }
     .feature-float { display: none; }
     .cursor-glow { display: none; }
+    .handwritten-label, .handwritten-arrow { display: none; }
 }
 
 @media (max-width: 600px) {
