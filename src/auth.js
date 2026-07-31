@@ -49,7 +49,7 @@ function verifyApiToken(req, res, next) {
     if (!verifyDashboardToken(userId, ts, t)) {
         return res.status(403).json({
             success: false,
-            error: '🔒 Access Denied: Invalid or expired dashboard token. Please request a new link via /dashboard in Telegram @MyKhataBot.'
+            error: '🔒 Access Denied: Invalid or expired dashboard token. Please request a new link via /dashboard in Penny AI on Telegram.'
         });
     }
 

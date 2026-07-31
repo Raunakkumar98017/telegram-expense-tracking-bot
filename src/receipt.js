@@ -13,7 +13,7 @@ async function handleReceiptPhoto(bot, msg) {
     const photo = photos[photos.length - 1];
 
     try {
-        await bot.sendMessage(chatId, '📸 *Scanning receipt with Groq AI...*', { parse_mode: 'Markdown' });
+        await bot.sendMessage(chatId, '📸 *Scanning receipt with Penny AI...*', { parse_mode: 'Markdown' });
 
         const fileLink = await bot.getFileLink(photo.file_id);
         const response = await axios.get(fileLink, { responseType: 'arraybuffer' });

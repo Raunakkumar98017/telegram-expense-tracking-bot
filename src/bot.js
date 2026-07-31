@@ -45,7 +45,7 @@ app.get(['/dashboard', '/dashboard.html', '/analytics'], (req, res) => {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Access Restricted — ExpenseBot</title>
+                <title>Access Restricted — Penny AI</title>
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
                 <style>
                     body { background: #0f0d19; color: #ffffff; font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
@@ -62,8 +62,8 @@ app.get(['/dashboard', '/dashboard.html', '/analytics'], (req, res) => {
                     <div class="icon">🔒</div>
                     <h1>Access Restricted</h1>
                     <p>Direct web URL access is disabled for your security & privacy.</p>
-                    <p>To view your live personal analytics dashboard, please type <strong>/dashboard</strong> in the <strong>@MyKhataBot</strong> Telegram chat.</p>
-                    <a href="https://t.me/MyKhataBot" class="btn-tg">Open @MyKhataBot in Telegram</a>
+                    <p>To view your live personal analytics dashboard, please type <strong>/dashboard</strong> in the <strong>Penny AI</strong> Telegram chat.</p>
+                    <a href="https://t.me/MyKhataBot" class="btn-tg">Open Penny AI in Telegram</a>
                 </div>
             </body>
             </html>
@@ -95,7 +95,7 @@ if (!token) {
 }
 
 const bot = new TelegramBot(token, { polling: true });
-console.log('🤖 Telegram AI Expense Bot is running!');
+console.log('🤖 Penny AI Telegram Bot is running!');
 
 // Launch background cron scheduler
 scheduler.start(bot);
@@ -130,7 +130,7 @@ async function checkBurnRate(userId, chatId) {
 bot.onText(/\/start/, (msg) => {
     const name = msg.from.first_name || 'there';
     bot.sendMessage(msg.chat.id,
-        `👋 Hey *${name}*! I'm your personal AI Expense Tracker!\n\n` +
+        `👋 Hey *${name}*! I'm *Penny AI*, your personal financial assistant!\n\n` +
         `💬 *Log expenses naturally:*\n  • Text: _spent 200 on lunch_\n  • 🎤 Voice: Send a voice note\n  • 📸 Receipt: Upload a photo\n\n` +
         `📊 *Commands & Features:*\n` +
         `/dashboard — Open your live Analytics Web Dashboard\n` +
@@ -139,9 +139,9 @@ bot.onText(/\/start/, (msg) => {
         `/heatmap — Spending calendar grid\n` +
         `/personality — AI Financial Personality\n` +
         `/report — Weekly AI Finance Report\n` +
-        `/roast — Groq Shayari Financial Advisor\n` +
+        `/roast — Financial Shayari & AI Roasts\n` +
         `/split — (Groups) Calculate shared balances\n` +
-        `/export — Download CSV\n` +
+        `/export — Download Excel Spreadsheet\n` +
         `/help — Detailed guide`,
         { parse_mode: 'Markdown' }
     );
@@ -173,7 +173,7 @@ bot.onText(/\/(dashboard|analytics)/, (msg) => {
 
 bot.onText(/\/help/, (msg) => {
     bot.sendMessage(msg.chat.id,
-        `📖 *How to use ExpenseBot:*\n\n` +
+        `📖 *How to use Penny AI:*\n\n` +
         `1. *Text Expense:* _spent 150 on coffee_\n` +
         `2. *Voice Note:* Send any audio voice message!\n` +
         `3. *Receipt Scanner:* Upload any receipt photo!\n` +
@@ -227,14 +227,14 @@ bot.onText(/\/report/, async (msg) => {
     bot.sendMessage(msg.chat.id, r.reportText, { parse_mode: 'Markdown' });
 });
 
-// /roast — Groq Shayari Financial Advisor
+// /roast — Financial Shayari & AI Roasts
 bot.onText(/\/roast/, async (msg) => {
     const userId = String(msg.from.id);
     const name = msg.from.first_name || 'Sher';
     await bot.sendMessage(msg.chat.id, `🔥 *${name} ka Kharcha check ho raha hai...*`, { parse_mode: 'Markdown' });
     const spendingData = await getWeeklySummaryText(userId);
     const roast = await getPoetryRoast(name, spendingData);
-    bot.sendMessage(msg.chat.id, `🎭 *Shayari-e-Kharcha (Powered by Groq):*\n\n${roast}`, { parse_mode: 'Markdown' });
+    bot.sendMessage(msg.chat.id, `🎭 *Shayari-e-Kharcha (Penny AI):*\n\n${roast}`, { parse_mode: 'Markdown' });
 });
 
 // /split — Group balances
@@ -249,7 +249,7 @@ bot.onText(/\/split/, async (msg) => {
     });
 });
 
-// /export — Send CSV document
+// /export — Send Excel document
 bot.onText(/\/export/, async (msg) => {
     const opts = {
         reply_markup: {
@@ -265,7 +265,7 @@ bot.onText(/\/export/, async (msg) => {
             ]
         }
     };
-    bot.sendMessage(msg.chat.id, '📅 Select timeframe for CSV export:', opts);
+    bot.sendMessage(msg.chat.id, '📅 Select timeframe for Excel export:', opts);
 });
 
 // /reset — Reset data
@@ -316,19 +316,19 @@ bot.on('callback_query', async (query) => {
 
     if (data.startsWith('export_')) {
         const timeframe = data.replace('export_', '');
-        bot.answerCallbackQuery(query.id, { text: '⏳ Generating CSV...' });
+        bot.answerCallbackQuery(query.id, { text: '⏳ Generating Excel file...' });
         generateCSV(userId, timeframe, async (err, csvPath) => {
             if (err || !csvPath) return bot.sendMessage(chatId, `❌ No expenses found for this timeframe.`);
             try {
                 bot.deleteMessage(chatId, messageId).catch(()=>{});
                 const tfLabel = timeframe.replace('_', ' ').toUpperCase();
                 await bot.sendDocument(chatId, csvPath, 
-                    { caption: `📊 Here is your expense report (${tfLabel})` }, 
-                    { filename: `ExpenseReport_${tfLabel}.csv` }
+                    { caption: `📊 Here is your Penny AI Excel expense report (${tfLabel})` }, 
+                    { filename: `PennyAI_Expenses_${tfLabel}.csv` }
                 );
                 require('fs').unlink(csvPath, ()=>{});
             } catch (e) {
-                bot.sendMessage(chatId, '❌ Failed to send CSV file.');
+                bot.sendMessage(chatId, '❌ Failed to send Excel file.');
             }
         });
     }
@@ -396,7 +396,7 @@ bot.on('message', async (msg) => {
             await bot.sendMessage(msg.chat.id, `🔥 *${name} ka Kharcha check ho raha hai...*`, { parse_mode: 'Markdown' });
             const spendingData = await getWeeklySummaryText(userId);
             const roast = await getPoetryRoast(name, spendingData);
-            bot.sendMessage(msg.chat.id, `🎭 *Shayari-e-Kharcha (Powered by Groq):*\n\n${roast}`, { parse_mode: 'Markdown' });
+            bot.sendMessage(msg.chat.id, `🎭 *Shayari-e-Kharcha (Penny AI):*\n\n${roast}`, { parse_mode: 'Markdown' });
             continue;
         }
 

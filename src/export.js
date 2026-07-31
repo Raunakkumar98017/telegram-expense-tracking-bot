@@ -67,7 +67,9 @@ async function generateCSV(userId, timeframe, callback) {
     });
 
     try {
-        fs.writeFileSync(csvPath, lines.join('\n'), 'utf8');
+        // Prepend UTF-8 BOM \uFEFF so Microsoft Excel opens rupee symbols & formatting natively
+        const excelContent = '\uFEFF' + lines.join('\n');
+        fs.writeFileSync(csvPath, excelContent, 'utf8');
         callback(null, csvPath);
     } catch (fsErr) {
         callback(fsErr, null);

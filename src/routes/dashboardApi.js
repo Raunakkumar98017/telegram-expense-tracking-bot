@@ -115,12 +115,27 @@ router.get('/personality', async (req, res) => {
     }
 });
 
-// 6. GET /api/expenses - Transaction history table
+// 6. GET /api/expenses - Transaction history table & Excel export
 router.get('/expenses', async (req, res) => {
     try {
         const userId = getUserId(req);
-        const limit = parseInt(req.query.limit) || 50;
+        const limit = parseInt(req.query.limit) || 200;
         const expenses = await getAllExpenses(userId, limit);
+
+        if (req.query.export === 'excel' || req.query.export === 'csv') {
+            res.setHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
+            res.setHeader('Content-Disposition', `attachment; filename=PennyAI_Expenses_${Date.now()}.csv`);
+            
+            // UTF-8 BOM so Microsoft Excel opens rupee symbols & formatting perfectly
+            let content = '\uFEFFDate,Category,Description,Amount (INR)\n';
+            expenses.forEach(e => {
+                const desc = (e.description || '').replace(/"/g, '""');
+                content += `"${e.date}","${e.category}","${desc}",${e.amount}\n`;
+            });
+
+            return res.send(content);
+        }
+
         res.json({
             success: true,
             expenses

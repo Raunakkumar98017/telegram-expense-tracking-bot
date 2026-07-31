@@ -22,8 +22,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadDashboardData();
 
     // Export Handlers
-    document.getElementById('btn-export-csv').addEventListener('click', exportCSV);
-    document.getElementById('btn-export-pdf').addEventListener('click', exportPDF);
+    const btnExcel = document.getElementById('btn-export-excel') || document.getElementById('btn-export-csv');
+    if (btnExcel) btnExcel.addEventListener('click', exportExcel);
 
     async function loadDashboardData() {
         try {
@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         container.innerHTML = '';
 
         if (!receipts || receipts.length === 0) {
-            container.innerHTML = '<span class="text-muted" style="font-size:12px; padding: 10px 0;">No receipts logged yet. Upload a receipt photo to @MyKhataBot!</span>';
+            container.innerHTML = '<span class="text-muted" style="font-size:12px; padding: 10px 0;">No receipts logged yet. Upload a receipt photo to Penny AI on Telegram!</span>';
             return;
         }
 
@@ -310,19 +310,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- EXPORT FUNCTIONS ---
-    function exportCSV() {
-        window.location.href = '/api/expenses?export=csv';
+    function exportExcel() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('userId') || '';
+        const ts = urlParams.get('ts') || '';
+        const t = urlParams.get('t') || '';
+        window.location.href = `/api/expenses?export=excel&userId=${userId}&ts=${ts}&t=${t}`;
     }
-
-    function exportPDF() {
-        const element = document.getElementById('dashboard-export-area');
-        const opt = {
-            margin:       0.2,
-            filename:     'MyKhataBot_Finance_Dashboard.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, backgroundColor: '#f8f9fc' },
-            jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
-        };
-        html2pdf().set(opt).from(element).save();
-    }
+    window.exportExcel = exportExcel;
+    window.exportCSV = exportExcel;
 });

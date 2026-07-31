@@ -1,7 +1,7 @@
 {
-  "name": "whatsapp-expense-bot",
+  "name": "penny-ai",
   "version": "1.0.0",
-  "description": "Personal WhatsApp Financial Assistant",
+  "description": "Penny AI — Personal Finance Assistant on Telegram",
   "main": "src/bot.js",
   "scripts": {
     "start": "node src/bot.js"

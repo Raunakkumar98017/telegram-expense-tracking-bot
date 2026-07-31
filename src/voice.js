@@ -11,7 +11,7 @@ async function handleVoiceNote(bot, msg) {
     if (!voice) return;
 
     try {
-        await bot.sendMessage(chatId, '🎤 *Transcribing voice note with Groq Whisper...*', { parse_mode: 'Markdown' });
+        await bot.sendMessage(chatId, '🎤 *Transcribing voice note with Penny AI...*', { parse_mode: 'Markdown' });
 
         const fileLink = await bot.getFileLink(voice.file_id);
         const response = await axios.get(fileLink, { responseType: 'arraybuffer' });
