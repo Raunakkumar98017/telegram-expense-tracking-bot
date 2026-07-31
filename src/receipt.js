@@ -33,13 +33,14 @@ async function handleReceiptPhoto(bot, msg) {
                 return bot.sendMessage(chatId, '❌ Failed to save receipt expense to database.');
             }
 
+            const cleanDisplayNote = note.replace(/\[Receipt\|[^\]]+\]\s*/, '').replace(/[_*`\[\]]/g, ' ');
             await bot.sendMessage(chatId,
                 `🧾 *Receipt Scanned & Saved!*\n\n` +
                 `💰 Amount: ₹${parsed.amount.toFixed(2)}\n` +
                 `📂 Category: ${parsed.category}\n` +
                 `🏪 Store: ${parsed.store}\n` +
                 `📅 Date: ${parsed.date}\n` +
-                `📝 Note: _${note}_`,
+                `📝 Note: ${cleanDisplayNote}`,
                 {
                     parse_mode: 'Markdown',
                     reply_markup: {

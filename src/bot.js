@@ -97,6 +97,14 @@ if (!token) {
 const bot = new TelegramBot(token, { polling: true });
 console.log('🤖 Penny AI Telegram Bot is running!');
 
+bot.on('polling_error', (error) => {
+    if (error.code === 'ETELEGRAM' && error.message.includes('409 Conflict')) {
+        // Suppress repeated console spam when another instance is polling
+    } else {
+        console.error('Telegram Polling Error:', error.message || error);
+    }
+});
+
 // Launch background cron scheduler
 scheduler.start(bot);
 
