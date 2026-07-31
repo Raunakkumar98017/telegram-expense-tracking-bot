@@ -905,6 +905,7 @@ body {
 
     .dash-card {
         padding: 16px 14px;
+        min-width: 0;
     }
 
     .table-container {
@@ -929,5 +930,9 @@ body {
 
     .p-hero-icon {
         font-size: 32px;
+    }
+
+    .p-analysis-grid {
+        grid-template-columns: 1fr;
     }
 }
