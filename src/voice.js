@@ -14,16 +14,23 @@ async function handleVoiceNote(bot, msg) {
         await bot.sendMessage(chatId, '🎤 *Transcribing voice note with Penny AI...*', { parse_mode: 'Markdown' });
 
         const fileLink = await bot.getFileLink(voice.file_id);
-        const response = await axios.get(fileLink, { responseType: 'arraybuffer' });
+        console.log('Voice file link:', fileLink);
+        
+        const response = await axios.get(fileLink, { responseType: 'arraybuffer', timeout: 15000 });
         const audioBuffer = Buffer.from(response.data);
+        console.log('Voice buffer size:', audioBuffer.length, 'bytes');
 
-        const transcript = await transcribeAudio(audioBuffer, 'voice.oga');
+        if (audioBuffer.length < 100) {
+            return bot.sendMessage(chatId, '❌ Audio file too small. Please record a longer voice note.', { parse_mode: 'Markdown' });
+        }
+
+        const transcript = await transcribeAudio(audioBuffer, 'voice.ogg');
 
         if (!transcript || !transcript.trim()) {
             return bot.sendMessage(chatId, '❌ Could not hear audio clearly. Please try again or type naturally.', { parse_mode: 'Markdown' });
         }
 
-        await bot.sendMessage(chatId, `🗣️ *Heard:* _"${transcript}"_`, { parse_mode: 'Markdown' });
+        await bot.sendMessage(chatId, `🗣️ *Heard:* _"${transcript.replace(/[_*`\[\]]/g, ' ')}"_`, { parse_mode: 'Markdown' });
 
         const parsed = parseText(transcript);
         const groupId = msg.chat.type !== 'private' ? String(chatId) : null;
@@ -37,12 +44,13 @@ async function handleVoiceNote(bot, msg) {
                 return bot.sendMessage(chatId, '❌ Failed to save voice expense.');
             }
 
+            const cleanDesc = (parsed.description || '').replace(/[_*`\[\]]/g, ' ');
             await bot.sendMessage(chatId,
                 `✅ *Voice Expense Saved!*\n\n` +
                 `💰 Amount: ₹${parsed.amount.toFixed(2)}\n` +
                 `📂 Category: ${parsed.category}\n` +
                 `📅 Date: ${parsed.date}\n` +
-                `📝 Note: _${parsed.description}_`,
+                `📝 Note: ${cleanDesc}`,
                 {
                     parse_mode: 'Markdown',
                     reply_markup: {
@@ -76,7 +84,8 @@ async function handleVoiceNote(bot, msg) {
         });
     } catch (err) {
         console.error('Voice Handler Error:', err.message);
-        bot.sendMessage(chatId, '⚠️ Error processing voice note. Please try again.', { parse_mode: 'Markdown' });
+        console.error('Voice Handler Full Error:', err.response?.data || err.stack);
+        bot.sendMessage(chatId, `⚠️ Error processing voice note: ${err.message || 'Unknown error'}. Please try again.`, { parse_mode: 'Markdown' });
     }
 }
 

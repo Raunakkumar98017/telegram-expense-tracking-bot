@@ -12,7 +12,6 @@ if (process.env.GROQ_API_KEY) {
 }
 
 /**
-/**
  * Transcribes audio buffer using Groq Whisper API (whisper-large-v3-turbo)
  */
 async function transcribeAudio(audioBuffer, filename = 'voice.ogg') {
