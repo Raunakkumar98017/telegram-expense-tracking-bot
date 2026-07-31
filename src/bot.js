@@ -277,12 +277,29 @@ bot.onText(/\/export/, async (msg) => {
 });
 
 // /reset — Reset data
+// /reset — Reset data with Warning Confirmation
 bot.onText(/\/reset/, (msg) => {
-    const userId = String(msg.from.id);
-    clearDatabase(userId, (err, count) => {
-        if (err) bot.sendMessage(msg.chat.id, '❌ Error clearing data.');
-        else bot.sendMessage(msg.chat.id, `✅ Your history has been reset! (${count} items removed)`, { parse_mode: 'Markdown' });
-    });
+    const chatId = msg.chat.id;
+    const opts = {
+        parse_mode: 'Markdown',
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    { text: '⚠️ Yes, Reset All History', callback_data: 'confirm_reset' },
+                    { text: '❌ Cancel', callback_data: 'cancel_reset' }
+                ]
+            ]
+        }
+    };
+    bot.sendMessage(
+        chatId, 
+        '⚠️ *Warning: Reset Expense History*\n\n' +
+        'Are you sure you want to delete all your logged expense transactions?\n' +
+        '• All expense logs & receipts will be permanently removed.\n' +
+        '• Your configured monthly budget will remain intact.\n\n' +
+        'This action *cannot be undone*!', 
+        opts
+    );
 });
 
 // ─── MEDIA HANDLERS (VOICE & RECEIPT PHOTO) ─────────────────────────────────
@@ -301,6 +318,30 @@ bot.on('callback_query', async (query) => {
     const userId = String(query.from.id);
     const chatId = query.message.chat.id;
     const messageId = query.message.message_id;
+
+    if (data === 'confirm_reset') {
+        bot.answerCallbackQuery(query.id, { text: '⏳ Resetting history...' });
+        clearDatabase(userId, (err, count) => {
+            if (err) {
+                bot.editMessageText('❌ *Error resetting data.* Please try again.', { chat_id: chatId, message_id: messageId, parse_mode: 'Markdown' });
+            } else {
+                bot.editMessageText(
+                    `🗑️ *Expense History Reset Successfully!*\n\n` +
+                    `• Items removed: *${count}*\n` +
+                    `• All expense metrics set to *₹0.00*.\n` +
+                    `• Your monthly budget remains intact.`,
+                    { chat_id: chatId, message_id: messageId, parse_mode: 'Markdown' }
+                );
+            }
+        });
+        return;
+    }
+
+    if (data === 'cancel_reset') {
+        bot.answerCallbackQuery(query.id, { text: 'Reset cancelled' });
+        bot.editMessageText('❌ *Reset Cancelled.* Your expense history is safe and untouched!', { chat_id: chatId, message_id: messageId, parse_mode: 'Markdown' });
+        return;
+    }
 
     if (data.startsWith('undo_')) {
         const expenseId = data.split('_')[1];
