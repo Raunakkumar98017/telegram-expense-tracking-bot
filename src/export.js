@@ -56,7 +56,15 @@ async function generateCSV(userId, timeframe, callback) {
     lines.push(headers.join(','));
     
     expenses.forEach(row => {
-        const cleanDate = String(row.date || '').split('T')[0];
+        let cleanDate = String(row.date || '').split('T')[0];
+        const parts = cleanDate.split('-');
+        if (parts.length === 3) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const monthIdx = parseInt(parts[1], 10) - 1;
+            if (monthIdx >= 0 && monthIdx < 12) {
+                cleanDate = `${parts[2]}-${months[monthIdx]}-${parts[0]}`;
+            }
+        }
         const line = [
             row.id,
             cleanDate,

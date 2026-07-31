@@ -129,7 +129,15 @@ router.get('/expenses', async (req, res) => {
             // UTF-8 BOM so Microsoft Excel opens rupee symbols & formatting perfectly
             let content = '\uFEFFDate,Category,Description,Amount (INR)\n';
             expenses.forEach(e => {
-                const cleanDate = String(e.date || '').split('T')[0];
+                let cleanDate = String(e.date || '').split('T')[0];
+                const parts = cleanDate.split('-');
+                if (parts.length === 3) {
+                    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    const monthIdx = parseInt(parts[1], 10) - 1;
+                    if (monthIdx >= 0 && monthIdx < 12) {
+                        cleanDate = `${parts[2]}-${months[monthIdx]}-${parts[0]}`;
+                    }
+                }
                 const desc = (e.description || '').replace(/"/g, '""');
                 content += `"${cleanDate}","${e.category}","${desc}",${e.amount}\n`;
             });
