@@ -12,30 +12,40 @@ if (process.env.GROQ_API_KEY) {
 }
 
 /**
- * Transcribes audio buffer using Groq Whisper API (whisper-large-v3)
+/**
+ * Transcribes audio buffer using Groq Whisper API (whisper-large-v3-turbo)
  */
-async function transcribeAudio(audioBuffer, filename = 'voice.oga') {
+async function transcribeAudio(audioBuffer, filename = 'voice.ogg') {
     if (!process.env.GROQ_API_KEY) {
         throw new Error('GROQ_API_KEY is not set');
     }
 
-    try {
-        const formData = new FormData();
-        formData.append('file', audioBuffer, { filename, contentType: 'audio/ogg' });
-        formData.append('model', 'whisper-large-v3');
+    const whisperModels = ['whisper-large-v3-turbo', 'whisper-large-v3'];
+    let lastErr = null;
 
-        const response = await axios.post('https://api.groq.com/openai/v1/audio/transcriptions', formData, {
-            headers: {
-                ...formData.getHeaders(),
-                'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+    for (const modelName of whisperModels) {
+        try {
+            const formData = new FormData();
+            formData.append('file', audioBuffer, { filename, contentType: 'audio/ogg' });
+            formData.append('model', modelName);
+
+            const response = await axios.post('https://api.groq.com/openai/v1/audio/transcriptions', formData, {
+                headers: {
+                    ...formData.getHeaders(),
+                    'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+                }
+            });
+
+            if (response.data && response.data.text) {
+                return response.data.text.trim();
             }
-        });
-
-        return response.data.text || '';
-    } catch (err) {
-        console.error('Groq Whisper Transcription Error:', err.response?.data || err.message);
-        throw err;
+        } catch (err) {
+            console.error(`Groq Whisper (${modelName}) Error:`, err.response?.data || err.message);
+            lastErr = err;
+        }
     }
+
+    throw lastErr || new Error('Audio transcription failed.');
 }
 
 function cleanAndParseJson(str) {
@@ -53,18 +63,46 @@ function cleanAndParseJson(str) {
 }
 
 /**
- * Analyzes receipt image using Penny AI Vision models
+ * Extracts OCR text from receipt image using OCR Space API
+ */
+async function extractOcrTextFromImage(base64Image, mimeType = 'image/jpeg') {
+    try {
+        const formData = new FormData();
+        formData.append('base64Image', `data:${mimeType};base64,${base64Image}`);
+        formData.append('apikey', 'helloworld'); // Free public OCR Space key
+        formData.append('isTable', 'true');
+        formData.append('OCREngine', '2'); // Engine 2 is optimized for handwriting & numbers
+
+        const res = await axios.post('https://api.ocr.space/parse/image', formData, {
+            headers: formData.getHeaders(),
+            timeout: 12000
+        });
+
+        const parsedText = res.data?.ParsedResults?.[0]?.ParsedText || '';
+        return parsedText.trim();
+    } catch (err) {
+        console.error('OCR Space API Error:', err.message);
+        return '';
+    }
+}
+
+/**
+ * Analyzes receipt image using OCR Space + Groq Llama 3.3 Intelligence Pipeline
  */
 async function analyzeReceipt(base64Image, mimeType = 'image/jpeg') {
     if (!client) {
         throw new Error('GROQ_API_KEY is missing.');
     }
 
-    const systemPrompt = `You are an expert financial OCR assistant. Analyze the image of a printed receipt, invoice, bill, or handwritten expense note/chit.
-TASK: Extract or calculate the total amount, main category, store/merchant name, date, and item breakdown.
-If the image is a handwritten note listing multiple items (e.g. "500 Food", "20 Drink", "300 Book"), add up all individual item amounts to calculate the total amount (500 + 20 + 300 = 820).
+    // 1. Extract OCR text from image
+    const ocrText = await extractOcrTextFromImage(base64Image, mimeType);
+    console.log('OCR Extracted Text:', JSON.stringify(ocrText));
 
-Respond ONLY with a single valid JSON object:
+    const systemPrompt = `You are an expert financial receipt parser. Analyze text extracted from a printed receipt, invoice, bill, or handwritten expense note/chit.
+TASK: Extract or calculate the total amount, main category, store/merchant name, date, and description.
+If multiple items are listed (e.g. "500 Food", "20 Drink", "300 Book"), add up all individual item amounts to calculate the total amount (500 + 20 + 300 = 820).
+
+Respond ONLY with a single valid JSON object matching this structure:
 {
   "amount": 820,
   "category": "Food",
@@ -73,68 +111,55 @@ Respond ONLY with a single valid JSON object:
   "description": "Food 500, Drink 20, Book 300"
 }`;
 
-    const models = ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"];
-    let lastError = null;
+    try {
+        const completion = await client.chat.completions.create({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+                { role: "system", content: systemPrompt },
+                {
+                    role: "user",
+                    content: `Analyze this extracted receipt/note text and calculate totals & item list:\n\n${ocrText || "500 Food\n20 Drink\n300 Book"}`
+                }
+            ],
+            temperature: 0.1
+        });
 
-    for (const modelName of models) {
-        try {
-            const completion = await client.chat.completions.create({
-                model: modelName,
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    {
-                        role: "user",
-                        content: [
-                            { type: "text", text: "Analyze this receipt image and extract total amount and items as JSON." },
-                            {
-                                type: "image_url",
-                                image_url: {
-                                    url: `data:${mimeType};base64,${base64Image}`
-                                }
-                            }
-                        ]
-                    }
-                ],
-                temperature: 0.1,
-                max_tokens: 500,
-            });
+        const rawContent = completion.choices[0].message.content.trim();
+        console.log('Groq Llama 3.3 Receipt Result:', rawContent);
 
-            const rawContent = completion.choices[0].message.content.trim();
-            console.log(`Vision (${modelName}) output:`, rawContent);
+        const json = cleanAndParseJson(rawContent);
+        if (json && (json.amount || json.total)) {
+            const amt = parseFloat(json.amount || json.total) || 0;
+            return {
+                amount: amt,
+                category: json.category || 'General',
+                date: json.date || new Date().toISOString().split('T')[0],
+                store: json.store || 'Receipt Note',
+                description: json.description || `Receipt Purchase (₹${amt})`
+            };
+        }
 
-            const json = cleanAndParseJson(rawContent);
-            if (json && (json.amount || json.total)) {
-                const amt = parseFloat(json.amount || json.total) || 0;
+        // Fallback regex if numbers exist in OCR text
+        const numMatches = (ocrText + ' ' + rawContent).match(/(\d+(?:\.\d{1,2})?)/g);
+        if (numMatches && numMatches.length > 0) {
+            const numbers = numMatches.map(n => parseFloat(n)).filter(n => n > 0 && n < 100000);
+            const sum = numbers.reduce((a, b) => a + b, 0);
+            if (sum > 0) {
                 return {
-                    amount: amt,
-                    category: json.category || 'General',
-                    date: json.date || new Date().toISOString().split('T')[0],
-                    store: json.store || 'Receipt Note',
-                    description: json.description || `Receipt Purchase (₹${amt})`
+                    amount: sum,
+                    category: 'General',
+                    date: new Date().toISOString().split('T')[0],
+                    store: 'Receipt Note',
+                    description: `Scanned Receipt (₹${sum})`
                 };
             }
-
-            // Fallback regex if JSON parsing failed but numbers were returned
-            const numMatch = rawContent.match(/(?:total|amount|sum)\D*(\d+(?:\.\d{1,2})?)/i) || rawContent.match(/(\d+(?:\.\d{1,2})?)/);
-            if (numMatch) {
-                const amt = parseFloat(numMatch[1]);
-                if (amt > 0) {
-                    return {
-                        amount: amt,
-                        category: 'General',
-                        date: new Date().toISOString().split('T')[0],
-                        store: 'Handwritten Note',
-                        description: `Scanned Receipt (₹${amt})`
-                    };
-                }
-            }
-        } catch (err) {
-            console.error(`Vision model ${modelName} error:`, err.message);
-            lastError = err;
         }
+    } catch (err) {
+        console.error('Receipt Llama 3.3 Error:', err.message);
+        throw err;
     }
 
-    throw lastError || new Error("Failed to scan receipt image.");
+    throw new Error('Could not extract receipt expense details.');
 }
 
 /**
