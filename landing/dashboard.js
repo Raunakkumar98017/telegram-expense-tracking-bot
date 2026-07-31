@@ -17,6 +17,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('user-profile-name').nextElementSibling.innerText = `ID: ${userId}`;
     }
 
+    // Update Dynamic Month & Date Range (e.g. July 1 – July 31, 2026)
+    const now = new Date();
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const currentMonthName = monthNames[now.getMonth()];
+    const currentYear = now.getFullYear();
+    const lastDayOfMonth = new Date(currentYear, now.getMonth() + 1, 0).getDate();
+
+    const rangeSpan = document.getElementById('current-month-range');
+    if (rangeSpan) {
+        rangeSpan.innerText = `${currentMonthName} 1 – ${currentMonthName} ${lastDayOfMonth}, ${currentYear}`;
+    }
+
+    const heatmapSelect = document.getElementById('heatmap-month-select');
+    if (heatmapSelect) {
+        heatmapSelect.innerHTML = `<option>${currentMonthName} ${currentYear}</option>`;
+    }
+
     const queryParam = window.location.search || '';
 
     await loadDashboardData();
