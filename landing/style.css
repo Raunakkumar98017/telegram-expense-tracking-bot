@@ -798,12 +798,316 @@ body {
 /* ─── SCROLL REVEAL ──────────────────────────────────────────────────────── */
 .reveal {
     opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.34, 1.2, 0.64, 1);
+    transform: translateY(30px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .reveal.visible {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* ─── SECTION HEADER ANIMATIONS ──────────────────────────────────────────── */
+.section-animate {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.section-animate.section-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ─── HERO ACCENT SHIMMER ────────────────────────────────────────────────── */
+.shimmer-text {
+    background: linear-gradient(
+        90deg,
+        var(--purple) 0%,
+        #a78bfa 25%,
+        #ec4899 50%,
+        #a78bfa 75%,
+        var(--purple) 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 4s linear infinite;
+}
+@keyframes shimmer {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+}
+
+/* ─── FLOAT CARD HOVER GLOW ──────────────────────────────────────────────── */
+.float-card {
+    position: relative;
+    animation: subtle-float 3.5s ease-in-out infinite;
+}
+.float-card::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(108,71,255,0.2), rgba(236,72,153,0.1), rgba(34,197,94,0.1));
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: -1;
+}
+.float-card:hover::before {
+    opacity: 1;
+}
+
+@keyframes subtle-float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+}
+
+/* ─── FEATURE CARD GRADIENT GLOW BORDER ──────────────────────────────────── */
+.feat-card {
+    --glow-x: 50%;
+    --glow-y: 50%;
+    position: relative;
+    overflow: hidden;
+}
+.feat-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+        300px circle at var(--glow-x) var(--glow-y),
+        rgba(108, 71, 255, 0.06) 0%,
+        transparent 70%
+    );
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    z-index: 0;
+}
+.feat-card:hover::after {
+    opacity: 1;
+}
+.feat-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* ─── FEAT ICON BOUNCE ON HOVER ──────────────────────────────────────────── */
+.feat-card:hover .feat-icon {
+    animation: icon-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.step-card:hover .step-icon {
+    animation: icon-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes icon-bounce {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.2); }
+    70% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+/* ─── STEP CARD GRADIENT LINE ────────────────────────────────────────────── */
+.step-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--purple), #a78bfa, var(--pink));
+    border-radius: 0 0 4px 4px;
+    transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.step-card:hover::before {
+    width: 60%;
+}
+
+/* ─── CTA BUTTON PULSE ───────────────────────────────────────────────────── */
+.btn-hero {
+    position: relative;
+    overflow: hidden;
+}
+.btn-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: translateX(-100%);
+    animation: btn-shine 3s ease-in-out infinite;
+}
+@keyframes btn-shine {
+    0% { transform: translateX(-100%); }
+    60%, 100% { transform: translateX(100%); }
+}
+
+.btn-launch {
+    position: relative;
+    overflow: hidden;
+}
+.btn-launch::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transform: translateX(-100%);
+    animation: btn-shine 4s ease-in-out 1s infinite;
+}
+
+/* ─── NAVBAR ENTRANCE ────────────────────────────────────────────────────── */
+.navbar {
+    animation: navbar-drop 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes navbar-drop {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── HERO BADGE PULSE RING ──────────────────────────────────────────────── */
+.hero-badge {
+    position: relative;
+}
+.hero-badge::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: inherit;
+    border: 2px solid rgba(108,71,255,0.15);
+    animation: badge-pulse 2.5s ease-in-out infinite;
+}
+@keyframes badge-pulse {
+    0%, 100% { opacity: 0; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.04); }
+}
+
+/* ─── PHONE FLOAT (enhanced) ─────────────────────────────────────────────── */
+@keyframes phone-float {
+    0%, 100% { transform: translateY(0px) rotateZ(0deg); }
+    25% { transform: translateY(-8px) rotateZ(0.5deg); }
+    50% { transform: translateY(-14px) rotateZ(0deg); }
+    75% { transform: translateY(-6px) rotateZ(-0.5deg); }
+}
+
+/* ─── PHONE SCREEN GLOW ──────────────────────────────────────────────────── */
+.phone-mockup::after {
+    content: '';
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 60px;
+    background: radial-gradient(ellipse, rgba(108,71,255,0.15), transparent 70%);
+    filter: blur(20px);
+    pointer-events: none;
+    animation: phone-glow 5s ease-in-out infinite;
+}
+@keyframes phone-glow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+/* ─── TRUST ITEMS HOVER ──────────────────────────────────────────────────── */
+.trust-item {
+    transition: all 0.3s ease;
+    cursor: default;
+}
+.trust-item:hover {
+    color: var(--purple);
+    transform: translateY(-2px);
+}
+.trust-item svg {
+    transition: transform 0.3s ease;
+}
+.trust-item:hover svg {
+    transform: scale(1.15);
+}
+
+/* ─── STACK ITEM HOVER ───────────────────────────────────────────────────── */
+.stack-item {
+    transition: all 0.3s ease;
+    cursor: default;
+    border-radius: 8px;
+    padding: 4px 8px;
+}
+.stack-item:hover {
+    background: rgba(108,71,255,0.06);
+    transform: translateY(-3px);
+}
+.stack-logo {
+    transition: transform 0.3s ease;
+}
+.stack-item:hover .stack-logo {
+    transform: scale(1.15) rotate(5deg);
+}
+
+/* ─── FOOTER BAR ICON HOVER ──────────────────────────────────────────────── */
+.footer-bar-icon {
+    transition: all 0.3s ease;
+}
+.footer-bar-item:hover .footer-bar-icon {
+    transform: scale(1.1) rotate(-5deg);
+    box-shadow: 0 4px 16px rgba(108,71,255,0.2);
+}
+
+/* ─── CURSOR GLOW (desktop only) ─────────────────────────────────────────── */
+.cursor-glow {
+    position: fixed;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(108,71,255,0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    mix-blend-mode: normal;
+    will-change: left, top;
+}
+
+/* ─── BRAND BADGE SHIMMER ────────────────────────────────────────────────── */
+.brand-badge {
+    position: relative;
+    overflow: hidden;
+}
+.brand-badge::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: badge-shimmer 3s ease-in-out infinite;
+}
+@keyframes badge-shimmer {
+    0% { transform: translateX(-50%); }
+    50%, 100% { transform: translateX(50%); }
+}
+
+/* ─── SECTION TAG ANIMATED BORDER ────────────────────────────────────────── */
+.section-tag {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+.section-tag:hover {
+    background: rgba(108,71,255,0.12);
+    transform: scale(1.05);
+}
+
+/* ─── HANDWRITTEN LABEL ANIMATION ────────────────────────────────────────── */
+.handwritten-label {
+    animation: handwrite-appear 1s cubic-bezier(0.16, 1, 0.3, 1) 2s both;
+}
+.handwritten-arrow {
+    animation: handwrite-appear 0.6s cubic-bezier(0.16, 1, 0.3, 1) 2.3s both, arrow-wiggle 2s ease-in-out 3s infinite;
+}
+@keyframes handwrite-appear {
+    from { opacity: 0; transform: translateY(10px) rotate(-5deg); }
+    to { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+@keyframes arrow-wiggle {
+    0%, 100% { transform: rotate(-20deg) translateY(0); }
+    50% { transform: rotate(-25deg) translateY(-4px); }
 }
 
 /* ─── RESPONSIVE ─────────────────────────────────────────────────────────── */
@@ -831,6 +1135,7 @@ body {
     .footer-bar { flex-direction: column; gap: 1.5rem; }
     .footer-bar-divider { width: 80%; height: 1px; }
     .feature-float { display: none; }
+    .cursor-glow { display: none; }
 }
 
 @media (max-width: 600px) {
@@ -842,4 +1147,16 @@ body {
     .hero-title { font-size: 2.2rem; }
     .hero-cta { flex-direction: column; width: 100%; }
     .btn-primary, .btn-ghost { width: 100%; justify-content: center; }
+    .cursor-glow { display: none; }
 }
+
+/* ─── REDUCED MOTION ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    .cursor-glow { display: none; }
+}
+
