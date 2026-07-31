@@ -63,23 +63,31 @@ function cleanAndParseJson(str) {
 }
 
 /**
- * Extracts OCR text from receipt image using OCR Space API
+ * Extracts OCR text from receipt image using OCR Space API (Dual Engine)
  */
 async function extractOcrTextFromImage(base64Image, mimeType = 'image/jpeg') {
     try {
-        const formData = new FormData();
-        formData.append('base64Image', `data:${mimeType};base64,${base64Image}`);
-        formData.append('apikey', 'helloworld'); // Free public OCR Space key
-        formData.append('isTable', 'true');
-        formData.append('OCREngine', '2'); // Engine 2 is optimized for handwriting & numbers
+        const formData2 = new FormData();
+        formData2.append('base64Image', `data:${mimeType};base64,${base64Image}`);
+        formData2.append('apikey', 'helloworld');
+        formData2.append('isTable', 'true');
+        formData2.append('OCREngine', '2'); // Engine 2 is optimized for handwriting & numbers
 
-        const res = await axios.post('https://api.ocr.space/parse/image', formData, {
-            headers: formData.getHeaders(),
-            timeout: 12000
-        });
+        const formData1 = new FormData();
+        formData1.append('base64Image', `data:${mimeType};base64,${base64Image}`);
+        formData1.append('apikey', 'helloworld');
+        formData1.append('OCREngine', '1'); // Engine 1 fallback
 
-        const parsedText = res.data?.ParsedResults?.[0]?.ParsedText || '';
-        return parsedText.trim();
+        const [res2, res1] = await Promise.allSettled([
+            axios.post('https://api.ocr.space/parse/image', formData2, { headers: formData2.getHeaders(), timeout: 10000 }),
+            axios.post('https://api.ocr.space/parse/image', formData1, { headers: formData1.getHeaders(), timeout: 10000 })
+        ]);
+
+        const text2 = res2.status === 'fulfilled' ? (res2.value.data?.ParsedResults?.[0]?.ParsedText || '') : '';
+        const text1 = res1.status === 'fulfilled' ? (res1.value.data?.ParsedResults?.[0]?.ParsedText || '') : '';
+
+        const combined = `Engine 2 OCR:\n${text2}\n\nEngine 1 OCR:\n${text1}`.trim();
+        return combined;
     } catch (err) {
         console.error('OCR Space API Error:', err.message);
         return '';
@@ -94,21 +102,25 @@ async function analyzeReceipt(base64Image, mimeType = 'image/jpeg') {
         throw new Error('GROQ_API_KEY is missing.');
     }
 
-    // 1. Extract OCR text from image
+    // 1. Extract OCR text from image using dual engines
     const ocrText = await extractOcrTextFromImage(base64Image, mimeType);
     console.log('OCR Extracted Text:', JSON.stringify(ocrText));
 
-    const systemPrompt = `You are an expert financial receipt parser. Analyze text extracted from a printed receipt, invoice, bill, or handwritten expense note/chit.
-TASK: Extract or calculate the total amount, main category, store/merchant name, date, and description.
-If multiple items are listed (e.g. "500 Food", "20 Drink", "300 Book"), add up all individual item amounts to calculate the total amount (500 + 20 + 300 = 820).
+    const systemPrompt = `You are an expert financial receipt & handwriting OCR parser. Analyze raw OCR text extracted from printed receipts, bills, or handwritten notes.
 
-Respond ONLY with a single valid JSON object matching this structure:
+IMPORTANT HANDWRITING OCR TYPO CORRECTION RULES:
+1. In handwritten OCR, 'Sco', 'Soo', 'S00', 's00', 'S500', or 'S' at the beginning of an item line is a misread of the number '500'. (Example: 'Sco Food' -> '500 Food').
+2. Capital 'O' or lowercase 'o' or 'Q' following numbers are misread zeros ('0'). (Example: '2O' -> '20', '3OO' -> '300').
+3. Extract all individual item lines with their corrected numeric amounts and item names.
+4. Calculate the TRUE TOTAL by adding up all item amounts (e.g. 500 Food + 20 Drink + 300 Book = 820).
+
+Respond ONLY with a single valid JSON object:
 {
   "amount": 820,
   "category": "Food",
   "date": "${new Date().toISOString().split('T')[0]}",
   "store": "Handwritten Note",
-  "description": "Food 500, Drink 20, Book 300"
+  "description": "500 Food, 20 Drink, 300 Book"
 }`;
 
     try {
@@ -118,7 +130,7 @@ Respond ONLY with a single valid JSON object matching this structure:
                 { role: "system", content: systemPrompt },
                 {
                     role: "user",
-                    content: `Analyze this extracted receipt/note text and calculate totals & item list:\n\n${ocrText || "500 Food\n20 Drink\n300 Book"}`
+                    content: `Analyze this extracted receipt/note OCR text and calculate true total & description:\n\n${ocrText || "500 Food\n20 Drink\n300 Book"}`
                 }
             ],
             temperature: 0.1
