@@ -8,7 +8,7 @@ async function getFinancialPersonality(userId) {
 
     if (!expenses || expenses.length < 3) {
         return {
-            title: "🌱 The Beginner",
+            title: "The Beginner",
             icon: "🌱",
             description: "You haven't logged enough transactions yet to determine your financial personality.",
             strength: "Clean slate and ready to build good financial habits.",
@@ -30,7 +30,7 @@ async function getFinancialPersonality(userId) {
     const foodSpend = (catTotals['Food'] || 0) + (catTotals['Groceries'] || 0) + (catTotals['Dining out'] || 0);
     const foodRatio = foodSpend / (totalSpent || 1);
 
-    let title = "🎯 Balanced Planner";
+    let title = "Balanced Planner";
     let icon = "🎯";
     let description = "You maintain steady control over your income and expenses with sensible spending choices.";
     let strength = "✔ Strong budget control and balanced category allocation.";
@@ -40,28 +40,28 @@ async function getFinancialPersonality(userId) {
     const budgetPct = budget ? (monthSpend / budget) * 100 : 50;
 
     if (foodRatio > 0.45 || expenses.length > 25) {
-        title = "🎉 Impulsive Shopper";
+        title = "Impulsive Shopper";
         icon = "🎉";
         description = "You love treating yourself! Frequent food orders and small impulse buys make up a big portion of your wallet.";
         strength = "✔ Enjoys life and values experiences & quick convenience.";
         weakness = "✖ High transaction frequency and impulse spending on delivery/dining.";
         recommendation = "Limit food delivery/outings to twice a week to save up to 30% monthly.";
     } else if (budgetPct > 90 || maxSingle > 3000) {
-        title = "🦁 Big Spender";
+        title = "Big Spender";
         icon = "🦁";
         description = "You don't compromise on quality or big purchases. When you spend, you go big!";
         strength = "✔ Decisive buyer who invests in high-value products.";
         weakness = "✖ High risk of burning through monthly budget early.";
         recommendation = "Implement a 48-hour cool-off rule before making purchases over ₹2,000.";
     } else if (monthSpend < 1500 || (budget && budgetPct < 40)) {
-        title = "🐢 Saver";
+        title = "Saver";
         icon = "🐢";
         description = "Highly cautious and disciplined with money. You prioritize security and low expenses.";
         strength = "✔ Outstanding spending discipline and high savings potential.";
         weakness = "✖ Might occasionally skip investing in self-growth or comfort.";
         recommendation = "Consider allocating a small 'fun budget' for rewards without guilt.";
     } else if (expenses.length > 10 && budgetPct <= 75) {
-        title = "📈 Smart Investor";
+        title = "Smart Investor";
         icon = "📈";
         description = "Data-driven and mindful. You track expenses diligently and maximize value for every rupee.";
         strength = "✔ Consistent tracking, low waste, and high financial awareness.";
