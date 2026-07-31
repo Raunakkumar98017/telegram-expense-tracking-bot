@@ -292,11 +292,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         receipts.forEach(rc => {
+            let imageUrl = null;
+            let displayTitle = rc.description || rc.category;
+
+            if (displayTitle.includes('[Receipt|')) {
+                const match = displayTitle.match(/\[Receipt\|([^\]]+)\]/);
+                if (match) {
+                    imageUrl = match[1];
+                    displayTitle = displayTitle.replace(/\[Receipt\|[^\]]+\]\s*/, '[Receipt] ');
+                }
+            }
+
             const paper = document.createElement('div');
             paper.className = 'receipt-paper-card';
+
+            const imgHtml = imageUrl
+                ? `<div class="rc-paper-img"><img src="${imageUrl}" alt="Receipt" onerror="this.parentNode.innerHTML='<i class=\\'fa-solid fa-file-invoice-dollar\\'></i>'"></div>`
+                : `<div class="rc-paper-img"><i class="fa-solid fa-file-invoice-dollar"></i></div>`;
+
             paper.innerHTML = `
-                <div class="rc-paper-img"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-                <span class="rc-store-title">${rc.description || rc.category}</span>
+                ${imgHtml}
+                <span class="rc-store-title">${displayTitle}</span>
                 <span class="rc-price">₹${rc.amount.toFixed(0)}</span>
                 <span class="rc-date">${rc.date}</span>
             `;
@@ -315,10 +331,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         expenses.forEach(tx => {
+            let cleanDesc = tx.description || tx.category;
+            if (cleanDesc.includes('[Receipt|')) {
+                cleanDesc = cleanDesc.replace(/\[Receipt\|[^\]]+\]\s*/, '[Receipt] ');
+            }
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${tx.date}</td>
-                <td><strong>${tx.description || tx.category}</strong></td>
+                <td><strong>${cleanDesc}</strong></td>
                 <td>${tx.category}</td>
                 <td class="tx-amount-neg">- ₹${parseFloat(tx.amount).toFixed(2)}</td>
             `;
