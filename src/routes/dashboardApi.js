@@ -76,12 +76,22 @@ router.get('/summary', async (req, res) => {
 router.get('/trends', async (req, res) => {
     try {
         const userId = getUserId(req);
-        const expenses = await getAllExpenses(userId, 200);
+        const expenses = await getAllExpenses(userId, 500);
+
+        const now = new Date();
+        const isLastMonth = req.query.catMonth === 'last';
+        const targetMonth = isLastMonth ? now.getMonth() - 1 : now.getMonth();
+        const targetYear = isLastMonth && targetMonth < 0 ? now.getFullYear() - 1 : now.getFullYear();
+        const actualMonth = targetMonth < 0 ? 11 : targetMonth;
 
         // Category breakdown
         const categoryMap = {};
         expenses.forEach(e => {
-            categoryMap[e.category] = (categoryMap[e.category] || 0) + e.amount;
+            if (!e.date) return;
+            const d = new Date(e.date);
+            if (d.getMonth() === actualMonth && d.getFullYear() === targetYear) {
+                categoryMap[e.category] = (categoryMap[e.category] || 0) + e.amount;
+            }
         });
 
         // Monthly trend (by day)

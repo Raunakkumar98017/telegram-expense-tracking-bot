@@ -36,6 +36,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const queryParam = window.location.search || '';
 
+    // Category Dropdown Listener
+    const catMonthSelect = document.getElementById('cat-month-select');
+    if (catMonthSelect) {
+        catMonthSelect.addEventListener('change', async (e) => {
+            try {
+                const sep = queryParam ? '&' : '?';
+                const res = await fetch(`/api/trends${queryParam}${sep}catMonth=${e.target.value}`);
+                const data = await res.json();
+                if (data.success) renderCategoryDonut(data.categories);
+            } catch (err) { console.error(err); }
+        });
+    }
+
     await loadDashboardData();
 
     // Export Handlers
@@ -98,7 +111,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             // 2. Fetch Category & Trend Data for Charts
-            const resTrends = await fetch(`/api/trends${queryParam}`);
+            const sep = queryParam ? '&' : '?';
+            const resTrends = await fetch(`/api/trends${queryParam}${sep}catMonth=this`);
             const trends = await resTrends.json();
             if (trends.success) {
                 renderCategoryDonut(trends.categories);
@@ -168,7 +182,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const values = Object.values(categories);
 
         if (keys.length === 0) {
-            legendContainer.innerHTML = '<span class="text-muted" style="font-size:12px;">No categories logged yet.</span>';
+            const isLastMonth = document.getElementById('cat-month-select')?.value === 'last';
+            const msg = isLastMonth ? 'No expenses recorded for last month.' : 'No expenses recorded for this month.';
+            legendContainer.innerHTML = `<span class="text-muted" style="font-size:12px;">${msg}</span>`;
             document.getElementById('donut-total-val').innerText = '₹0.00';
             if (donutChartInstance) donutChartInstance.destroy();
             return;
