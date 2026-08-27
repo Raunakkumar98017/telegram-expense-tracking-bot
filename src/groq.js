@@ -4,10 +4,10 @@ const axios = require('axios');
 require('dotenv').config();
 
 let client = null;
-if (process.env.GROQ_API_KEY) {
+if (process.env.OPENROUTER_API_KEY) {
     client = new OpenAI({
-        apiKey: process.env.GROQ_API_KEY,
-        baseURL: "https://api.groq.com/openai/v1",
+        apiKey: process.env.OPENROUTER_API_KEY,
+        baseURL: "https://openrouter.ai/api/v1",
     });
 }
 
@@ -15,11 +15,11 @@ if (process.env.GROQ_API_KEY) {
  * Transcribes audio buffer using Groq Whisper API (whisper-large-v3-turbo)
  */
 async function transcribeAudio(audioBuffer, filename = 'voice.ogg') {
-    if (!process.env.GROQ_API_KEY) {
-        throw new Error('GROQ_API_KEY is not set');
+    if (!process.env.OPENROUTER_API_KEY) {
+        throw new Error('OPENROUTER_API_KEY is not set');
     }
 
-    const whisperModels = ['whisper-large-v3-turbo', 'whisper-large-v3'];
+    const whisperModels = ['openai/whisper-large-v3', 'openai/whisper-1'];
     let lastErr = null;
 
     for (const modelName of whisperModels) {
@@ -28,10 +28,10 @@ async function transcribeAudio(audioBuffer, filename = 'voice.ogg') {
             formData.append('file', audioBuffer, { filename, contentType: 'audio/ogg' });
             formData.append('model', modelName);
 
-            const response = await axios.post('https://api.groq.com/openai/v1/audio/transcriptions', formData, {
+            const response = await axios.post('https://openrouter.ai/api/v1/audio/transcriptions', formData, {
                 headers: {
                     ...formData.getHeaders(),
-                    'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+                    'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`
                 }
             });
 
@@ -39,7 +39,7 @@ async function transcribeAudio(audioBuffer, filename = 'voice.ogg') {
                 return response.data.text.trim();
             }
         } catch (err) {
-            console.error(`Groq Whisper (${modelName}) Error:`, err.response?.data || err.message);
+            console.error(`OpenRouter Whisper (${modelName}) Error:`, err.response?.data || err.message);
             lastErr = err;
         }
     }
@@ -98,7 +98,7 @@ async function extractOcrTextFromImage(base64Image, mimeType = 'image/jpeg') {
  */
 async function analyzeReceipt(base64Image, mimeType = 'image/jpeg') {
     if (!client) {
-        throw new Error('GROQ_API_KEY is missing.');
+        throw new Error('OPENROUTER_API_KEY is missing.');
     }
 
     // 1. Extract OCR text from image using dual engines
@@ -124,7 +124,7 @@ Respond ONLY with a single valid JSON object:
 
     try {
         const completion = await client.chat.completions.create({
-            model: "llama-3.3-70b-versatile",
+            model: "meta-llama/llama-3.3-70b-instruct",
             messages: [
                 { role: "system", content: systemPrompt },
                 {
@@ -136,7 +136,7 @@ Respond ONLY with a single valid JSON object:
         });
 
         const rawContent = completion.choices[0].message.content.trim();
-        console.log('Groq Llama 3.3 Receipt Result:', rawContent);
+        console.log('OpenRouter Llama 3.3 Receipt Result:', rawContent);
 
         const json = cleanAndParseJson(rawContent);
         if (json && (json.amount || json.total)) {
@@ -166,7 +166,7 @@ Respond ONLY with a single valid JSON object:
             }
         }
     } catch (err) {
-        console.error('Receipt Llama 3.3 Error:', err.message);
+        console.error('Receipt OpenRouter Error:', err.message);
         throw err;
     }
 
@@ -180,7 +180,7 @@ async function getChatCompletion(userPrompt, systemPrompt = 'You are a helpful f
     if (!client) return null;
     try {
         const completion = await client.chat.completions.create({
-            model: "llama-3.3-70b-versatile",
+            model: "meta-llama/llama-3.3-70b-instruct",
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: userPrompt }
@@ -190,7 +190,7 @@ async function getChatCompletion(userPrompt, systemPrompt = 'You are a helpful f
         });
         return completion.choices[0].message.content;
     } catch (err) {
-        console.error('Groq Chat Completion Error:', err.message);
+        console.error('OpenRouter Chat Completion Error:', err.message);
         return null;
     }
 }
