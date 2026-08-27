@@ -37,9 +37,9 @@
                 <!-- Right: Action Controls -->
                 <div class="header-actions-group">
                     <form id="date-filter-form" class="date-range-badge custom-date-form">
-                        <input type="date" id="filter-start" class="date-input" title="Start Date" required>
+                        <input type="date" id="filter-start" class="date-input" title="Start Date" onclick="this.showPicker()" required>
                         <span class="date-separator">to</span>
-                        <input type="date" id="filter-end" class="date-input" title="End Date" required>
+                        <input type="date" id="filter-end" class="date-input" title="End Date" onclick="this.showPicker()" required>
                         <button type="submit" class="btn-filter" title="Apply Filter"><i class="fa-solid fa-filter"></i></button>
                     </form>
 
@@ -346,7 +346,7 @@
         </main>
     </div>
 
-    <script src="dashboard.js"></script>
+    <script src="dashboard.js?v=2"></script>
 </body>
 
 </html>

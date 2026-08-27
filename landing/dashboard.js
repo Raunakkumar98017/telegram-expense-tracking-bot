@@ -41,6 +41,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             endInput.value = `${currentYear}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfMonth).padStart(2, '0')}`;
         }
+        
+        // UX: Auto-sync dates to make selecting a "particular day" easier
+        startInput.addEventListener('change', () => {
+            if (startInput.value > endInput.value) {
+                endInput.value = startInput.value;
+            }
+        });
+        
+        endInput.addEventListener('change', () => {
+            if (endInput.value < startInput.value) {
+                startInput.value = endInput.value;
+            }
+        });
 
         document.getElementById('date-filter-form').addEventListener('submit', (e) => {
             e.preventDefault();
