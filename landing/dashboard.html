@@ -36,10 +36,12 @@
 
                 <!-- Right: Action Controls -->
                 <div class="header-actions-group">
-                    <div class="date-range-badge">
-                        <i class="fa-regular fa-calendar-days"></i>
-                        <span id="current-month-range">May 1 – May 31, 2026</span>
-                    </div>
+                    <form id="date-filter-form" class="date-range-badge custom-date-form">
+                        <input type="date" id="filter-start" class="date-input" title="Start Date" required>
+                        <span class="date-separator">to</span>
+                        <input type="date" id="filter-end" class="date-input" title="End Date" required>
+                        <button type="submit" class="btn-filter" title="Apply Filter"><i class="fa-solid fa-filter"></i></button>
+                    </form>
 
                     <a href="https://t.me/MyKhataBot" target="_blank" class="btn-tg-primary">
                         <i class="fa-brands fa-telegram"></i> Open Telegram Bot

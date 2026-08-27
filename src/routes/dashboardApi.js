@@ -8,7 +8,9 @@ const {
     getYesterdaySpend,
     getBudget,
     getStreak,
-    getDailyExpensesMap
+    getDailyExpensesMap,
+    getCustomRangeSpend,
+    getAllExpensesBetween
 } = require('../expenses');
 const { generateWeeklyReport, generateSpendingHeatmap } = require('../reports');
 const { getFinancialPersonality } = require('../personality');
@@ -28,10 +30,23 @@ function getUserId(req) {
 router.get('/summary', async (req, res) => {
     try {
         const userId = getUserId(req);
-        const monthSpend = await getMonthSpend(userId);
-        const lastMonthSpend = await getLastMonthSpend(userId);
-        const todaySpend = await getTodaySpend(userId);
-        const yesterdaySpend = await getYesterdaySpend(userId);
+        const startDate = req.query.startDate;
+        const endDate = req.query.endDate;
+
+        let monthSpend = 0;
+        let lastMonthSpend = 0;
+        let todaySpend = 0;
+        let yesterdaySpend = 0;
+        
+        if (startDate && endDate) {
+            monthSpend = await getCustomRangeSpend(userId, startDate, endDate);
+        } else {
+            monthSpend = await getMonthSpend(userId);
+            lastMonthSpend = await getLastMonthSpend(userId);
+            todaySpend = await getTodaySpend(userId);
+            yesterdaySpend = await getYesterdaySpend(userId);
+        }
+
         const budget = (await getBudget(userId)) || 5000;
         const streak = await getStreak(userId);
 
@@ -40,7 +55,7 @@ router.get('/summary', async (req, res) => {
 
         let spentTrendText = null;
         let spentTrendDirection = 'up';
-        if (lastMonthSpend > 0) {
+        if (!startDate && lastMonthSpend > 0) {
             const diffPct = (((monthSpend - lastMonthSpend) / lastMonthSpend) * 100).toFixed(1);
             spentTrendDirection = diffPct >= 0 ? 'up' : 'down';
             spentTrendText = `${Math.abs(diffPct)}% vs last mth`;
@@ -48,7 +63,7 @@ router.get('/summary', async (req, res) => {
 
         let todayTrendText = null;
         let todayTrendDirection = 'down';
-        if (yesterdaySpend > 0) {
+        if (!startDate && yesterdaySpend > 0) {
             const diffPct = (((todaySpend - yesterdaySpend) / yesterdaySpend) * 100).toFixed(1);
             todayTrendDirection = diffPct >= 0 ? 'up' : 'down';
             todayTrendText = `${Math.abs(diffPct)}% vs Yesterday`;
@@ -59,7 +74,7 @@ router.get('/summary', async (req, res) => {
             totalSpent: monthSpend,
             budget,
             budgetLeft,
-            todaySpend,
+            todaySpend: startDate ? monthSpend : todaySpend, // If custom range, show total
             streak,
             burnRatePct,
             spentTrendText,
@@ -76,7 +91,15 @@ router.get('/summary', async (req, res) => {
 router.get('/trends', async (req, res) => {
     try {
         const userId = getUserId(req);
-        const expenses = await getAllExpenses(userId, 500);
+        const startDate = req.query.startDate;
+        const endDate = req.query.endDate;
+        
+        let expenses;
+        if (startDate && endDate) {
+            expenses = await getAllExpensesBetween(userId, startDate, endDate);
+        } else {
+            expenses = await getAllExpenses(userId, 500);
+        }
 
         const now = new Date();
         const isLastMonth = req.query.catMonth === 'last';
@@ -88,14 +111,28 @@ router.get('/trends', async (req, res) => {
         const categoryMap = {};
         expenses.forEach(e => {
             if (!e.date) return;
-            const d = new Date(e.date);
-            if (d.getMonth() === actualMonth && d.getFullYear() === targetYear) {
+            if (startDate && endDate) {
+                // Already filtered by DB
                 categoryMap[e.category] = (categoryMap[e.category] || 0) + e.amount;
+            } else {
+                const d = new Date(e.date);
+                if (d.getMonth() === actualMonth && d.getFullYear() === targetYear) {
+                    categoryMap[e.category] = (categoryMap[e.category] || 0) + e.amount;
+                }
             }
         });
 
         // Monthly trend (by day)
-        const dailyMap = await getDailyExpensesMap(userId, 30);
+        let dailyMap = {};
+        if (startDate && endDate) {
+            expenses.forEach(r => {
+                if(r.date) {
+                    dailyMap[r.date] = (dailyMap[r.date] || 0) + r.amount;
+                }
+            });
+        } else {
+            dailyMap = await getDailyExpensesMap(userId, 30);
+        }
 
         res.json({
             success: true,
@@ -154,7 +191,15 @@ router.get('/expenses', async (req, res) => {
     try {
         const userId = getUserId(req);
         const limit = parseInt(req.query.limit) || 200;
-        const expenses = await getAllExpenses(userId, limit);
+        const startDate = req.query.startDate;
+        const endDate = req.query.endDate;
+        
+        let expenses;
+        if (startDate && endDate) {
+            expenses = await getAllExpensesBetween(userId, startDate, endDate);
+        } else {
+            expenses = await getAllExpenses(userId, limit);
+        }
 
         if (req.query.export === 'excel' || req.query.export === 'csv') {
             res.setHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');

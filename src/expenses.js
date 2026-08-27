@@ -66,6 +66,15 @@ async function getDetailedSummary(userId, range, callback) {
     return { total, catMap, reply };
 }
 
+async function getCustomRangeSpend(userId, startDate, endDate) {
+    const { data } = await supabase.from('expenses')
+        .select('amount')
+        .eq('userId', userId)
+        .gte('date', startDate)
+        .lte('date', endDate);
+    return data ? data.reduce((acc, r) => acc + r.amount, 0) : 0;
+}
+
 async function getMonthSpend(userId) {
     const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
     const { data } = await supabase.from('expenses').select('amount').eq('userId', userId).gte('date', startDate);
@@ -131,6 +140,15 @@ async function getAllExpenses(userId, limit = 50) {
     const query = supabase.from('expenses').select('*');
     if (userId) query.eq('userId', userId);
     const { data } = await query.order('date', { ascending: false }).order('id', { ascending: false }).limit(limit);
+    return data || [];
+}
+
+async function getAllExpensesBetween(userId, startDate, endDate) {
+    const query = supabase.from('expenses').select('*');
+    if (userId) query.eq('userId', userId);
+    if (startDate) query.gte('date', startDate);
+    if (endDate) query.lte('date', endDate);
+    const { data } = await query.order('date', { ascending: false }).order('id', { ascending: false }).limit(500);
     return data || [];
 }
 
@@ -239,18 +257,19 @@ module.exports = {
     saveExpense,
     deleteExpense,
     getDetailedSummary,
-    getRecentText,
-    clearDatabase,
-    setBudget,
-    getBudget,
     getMonthSpend,
+    getCustomRangeSpend,
     getLastMonthSpend,
     getTodaySpend,
     getYesterdaySpend,
     getWeeklySummaryText,
-    getGroupSplit,
+    getRecentText,
     getAllExpenses,
+    getAllExpensesBetween,
     getDailyExpensesMap,
     getStreak,
-    getUsersList
+    setBudget,
+    getBudget,
+    clearDatabase,
+    getGroupSplit
 };

@@ -17,21 +17,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('user-profile-name').nextElementSibling.innerText = `ID: ${userId}`;
     }
 
-    // Update Dynamic Month & Date Range (e.g. July 1 – July 31, 2026)
+    // Handle Custom Date Range Form
     const now = new Date();
-    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    const currentMonthName = monthNames[now.getMonth()];
     const currentYear = now.getFullYear();
     const lastDayOfMonth = new Date(currentYear, now.getMonth() + 1, 0).getDate();
 
-    const rangeSpan = document.getElementById('current-month-range');
-    if (rangeSpan) {
-        rangeSpan.innerText = `${currentMonthName} 1 – ${currentMonthName} ${lastDayOfMonth}, ${currentYear}`;
-    }
+    const startDateParam = urlParams.get('startDate');
+    const endDateParam = urlParams.get('endDate');
 
-    const heatmapSelect = document.getElementById('heatmap-month-select');
-    if (heatmapSelect) {
-        heatmapSelect.innerHTML = `<option>${currentMonthName} ${currentYear}</option>`;
+    const startInput = document.getElementById('filter-start');
+    const endInput = document.getElementById('filter-end');
+
+    if (startInput && endInput) {
+        // Initialize inputs with URL params or default to current month
+        if (startDateParam) {
+            startInput.value = startDateParam;
+        } else {
+            startInput.value = `${currentYear}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+        }
+        
+        if (endDateParam) {
+            endInput.value = endDateParam;
+        } else {
+            endInput.value = `${currentYear}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(lastDayOfMonth).padStart(2, '0')}`;
+        }
+
+        document.getElementById('date-filter-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newStart = startInput.value;
+            const newEnd = endInput.value;
+            
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.set('startDate', newStart);
+            newUrl.searchParams.set('endDate', newEnd);
+            
+            window.location.href = newUrl.toString();
+        });
     }
 
     const queryParam = window.location.search || '';
@@ -80,7 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         spentTrendEl.innerHTML = `<i class="fa-solid ${iconCls}"></i> ${summary.spentTrendText}`;
                     } else {
                         spentTrendEl.className = 'kpi-subtext';
-                        spentTrendEl.innerText = 'Current Month';
+                        spentTrendEl.innerText = (startDateParam && endDateParam) ? 'Custom Range' : 'Current Month';
                     }
                 }
 
@@ -94,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         todayTrendEl.innerHTML = `<i class="fa-solid ${iconCls}"></i> ${summary.todayTrendText}`;
                     } else {
                         todayTrendEl.className = 'kpi-subtext';
-                        todayTrendEl.innerText = 'Today\'s Total';
+                        todayTrendEl.innerText = (startDateParam && endDateParam) ? 'Custom Range' : 'Today\'s Total';
                     }
                 }
 

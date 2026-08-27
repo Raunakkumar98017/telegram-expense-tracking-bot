@@ -146,6 +146,47 @@ body {
     color: var(--text-primary);
 }
 
+.custom-date-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px;
+}
+
+.date-input {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+}
+
+.date-separator {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.btn-filter {
+    background: var(--purple-primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-filter:hover {
+    background: #6a32d1;
+}
+
 .btn-tg-primary {
     display: inline-flex;
     align-items: center;
