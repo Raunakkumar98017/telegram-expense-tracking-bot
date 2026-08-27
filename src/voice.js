@@ -1,6 +1,5 @@
 const axios = require('axios');
-const { transcribeAudio } = require('./groq');
-const { parseText } = require('./parser');
+const { transcribeAudio, extractExpensesFromText } = require('./groq');
 const { saveExpense, getBudget, getMonthSpend } = require('./expenses');
 
 async function handleVoiceNote(bot, msg) {
@@ -32,34 +31,39 @@ async function handleVoiceNote(bot, msg) {
 
         await bot.sendMessage(chatId, `🗣️ *Heard:* _"${transcript.replace(/[_*`\[\]]/g, ' ')}"_`, { parse_mode: 'Markdown' });
 
-        const parsed = parseText(transcript);
+        const expenses = await extractExpensesFromText(transcript);
         const groupId = msg.chat.type !== 'private' ? String(chatId) : null;
 
-        if (parsed.amount <= 0) {
-            return bot.sendMessage(chatId, `❓ Could not extract expense amount from: "${transcript}". Try saying "spent 300 on groceries"`, { parse_mode: 'Markdown' });
+        if (!expenses || expenses.length === 0) {
+            return bot.sendMessage(chatId, `❓ Could not extract expense amounts from: "${transcript}". Try saying "spent 300 on groceries"`, { parse_mode: 'Markdown' });
         }
 
-        saveExpense(userId, parsed.amount, parsed.category, parsed.date, parsed.description, groupId, async (err, expenseId) => {
-            if (err) {
-                return bot.sendMessage(chatId, '❌ Failed to save voice expense.');
-            }
+        for (const parsed of expenses) {
+            if (!parsed.amount || parsed.amount <= 0) continue;
+            const dateStr = new Date().toISOString().split('T')[0];
 
-            const cleanDesc = (parsed.description || '').replace(/[_*`\[\]]/g, ' ');
-            await bot.sendMessage(chatId,
-                `✅ *Voice Expense Saved!*\n\n` +
-                `💰 Amount: ₹${parsed.amount.toFixed(2)}\n` +
-                `📂 Category: ${parsed.category}\n` +
-                `📅 Date: ${parsed.date}\n` +
-                `📝 Note: ${cleanDesc}`,
-                {
-                    parse_mode: 'Markdown',
-                    reply_markup: {
-                        inline_keyboard: [[
-                            { text: '↩️ Undo', callback_data: `undo_${expenseId}` }
-                        ]]
-                    }
+            saveExpense(userId, parsed.amount, parsed.category, dateStr, parsed.description, groupId, async (err, expenseId) => {
+                if (err) {
+                    return bot.sendMessage(chatId, '❌ Failed to save voice expense.');
                 }
-            );
+
+                const cleanDesc = (parsed.description || '').replace(/[_*`\[\]]/g, ' ');
+                await bot.sendMessage(chatId,
+                    `✅ *Voice Expense Saved!*\n\n` +
+                    `💰 Amount: ₹${parsed.amount.toFixed(2)}\n` +
+                    `📂 Category: ${parsed.category}\n` +
+                    `📝 Note: ${cleanDesc}`,
+                    {
+                        parse_mode: 'Markdown',
+                        reply_markup: {
+                            inline_keyboard: [[
+                                { text: '↩️ Undo', callback_data: `undo_${expenseId}` }
+                            ]]
+                        }
+                    }
+                );
+            });
+        }
 
             // Burn rate check
             const budget = await getBudget(userId);

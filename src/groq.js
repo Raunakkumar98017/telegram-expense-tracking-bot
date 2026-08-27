@@ -195,4 +195,48 @@ async function getChatCompletion(userPrompt, systemPrompt = 'You are a helpful f
     }
 }
 
-module.exports = { client, transcribeAudio, analyzeReceipt, getChatCompletion };
+/**
+ * Uses LLM to extract multiple expenses from natural language text
+ */
+async function extractExpensesFromText(text) {
+    if (!client) return [];
+    
+    const systemPrompt = `You are a smart financial parsing AI. Extract ALL expenses mentioned in the user's text.
+Return a valid JSON array of objects.
+Each object must have:
+- "amount": (number, just the numeric value)
+- "category": (string, short 1-2 words like "Food", "Transport", "Shopping")
+- "description": (string, what it was for)
+
+Example Input: "Add 20 rupees on pan and 30 rupees on coffee"
+Output:
+[
+  {"amount": 20, "category": "Snacks", "description": "Pan"},
+  {"amount": 30, "category": "Food", "description": "Coffee"}
+]
+
+Respond ONLY with the JSON array, no markdown, no other text.`;
+
+    try {
+        const completion = await client.chat.completions.create({
+            model: "meta-llama/llama-3.3-70b-instruct",
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: text }
+            ],
+            temperature: 0.1
+        });
+        
+        const rawContent = completion.choices[0].message.content.trim();
+        const jsonMatch = rawContent.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+        }
+        return [];
+    } catch (err) {
+        console.error("LLM Expense Parser Error:", err.message);
+        return [];
+    }
+}
+
+module.exports = { client, transcribeAudio, analyzeReceipt, getChatCompletion, extractExpensesFromText };
