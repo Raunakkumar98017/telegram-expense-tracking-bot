@@ -15,11 +15,11 @@ if (process.env.OPENROUTER_API_KEY) {
  * Transcribes audio buffer using Groq Whisper API (whisper-large-v3-turbo)
  */
 async function transcribeAudio(audioBuffer, filename = 'voice.ogg') {
-    if (!process.env.OPENROUTER_API_KEY) {
-        throw new Error('OPENROUTER_API_KEY is not set');
+    if (!process.env.GROQ_API_KEY) {
+        throw new Error('GROQ_API_KEY is not set. Cannot use Groq Whisper.');
     }
 
-    const whisperModels = ['openai/whisper-large-v3', 'openai/whisper-1'];
+    const whisperModels = ['whisper-large-v3-turbo', 'whisper-large-v3'];
     let lastErr = null;
 
     for (const modelName of whisperModels) {
@@ -28,10 +28,10 @@ async function transcribeAudio(audioBuffer, filename = 'voice.ogg') {
             formData.append('file', audioBuffer, { filename, contentType: 'audio/ogg' });
             formData.append('model', modelName);
 
-            const response = await axios.post('https://openrouter.ai/api/v1/audio/transcriptions', formData, {
+            const response = await axios.post('https://api.groq.com/openai/v1/audio/transcriptions', formData, {
                 headers: {
                     ...formData.getHeaders(),
-                    'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`
+                    'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
                 }
             });
 
@@ -39,7 +39,7 @@ async function transcribeAudio(audioBuffer, filename = 'voice.ogg') {
                 return response.data.text.trim();
             }
         } catch (err) {
-            console.error(`OpenRouter Whisper (${modelName}) Error:`, err.response?.data || err.message);
+            console.error(`Groq Whisper (${modelName}) Error:`, err.response?.data || err.message);
             lastErr = err;
         }
     }
