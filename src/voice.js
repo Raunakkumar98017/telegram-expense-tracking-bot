@@ -62,30 +62,28 @@ async function handleVoiceNote(bot, msg) {
                         }
                     }
                 );
+                // Burn rate check
+                const budget = await getBudget(userId);
+                if (budget) {
+                    const monthSpend = await getMonthSpend(userId);
+                    const now = new Date();
+                    const dayOfMonth = now.getDate();
+                    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                    const dailyRate = monthSpend / (dayOfMonth || 1);
+                    const projectedSpend = dailyRate * daysInMonth;
+
+                    if (projectedSpend > budget) {
+                        const runOutDay = Math.floor(budget / dailyRate);
+                        bot.sendMessage(chatId,
+                            `🔥 *Burn Rate Alert!*\n\n` +
+                            `You've spent ₹${monthSpend.toFixed(0)} in ${dayOfMonth} days.\n` +
+                            `At this pace, you'll *run out of your ₹${budget} budget by the ${runOutDay}th* of this month!`,
+                            { parse_mode: 'Markdown' }
+                        );
+                    }
+                }
             });
         }
-
-            // Burn rate check
-            const budget = await getBudget(userId);
-            if (budget) {
-                const monthSpend = await getMonthSpend(userId);
-                const now = new Date();
-                const dayOfMonth = now.getDate();
-                const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-                const dailyRate = monthSpend / (dayOfMonth || 1);
-                const projectedSpend = dailyRate * daysInMonth;
-
-                if (projectedSpend > budget) {
-                    const runOutDay = Math.floor(budget / dailyRate);
-                    bot.sendMessage(chatId,
-                        `🔥 *Burn Rate Alert!*\n\n` +
-                        `You've spent ₹${monthSpend.toFixed(0)} in ${dayOfMonth} days.\n` +
-                        `At this pace, you'll *run out of your ₹${budget} budget by the ${runOutDay}th* of this month!`,
-                        { parse_mode: 'Markdown' }
-                    );
-                }
-            }
-        });
     } catch (err) {
         console.error('Voice Handler Error:', err.message);
         console.error('Voice Handler Full Error:', err.response?.data || err.stack);
