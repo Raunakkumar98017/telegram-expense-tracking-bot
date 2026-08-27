@@ -17,9 +17,10 @@ const {
 } = require('./expenses');
 const { generateCSV } = require('./export');
 const { getPoetryRoast } = require('./advisor');
-const { handleReceiptPhoto } = require('./receipt');
+const { handleReceiptPhoto, confirmReceiptDate } = require('./receipt');
 const { handleVoiceNote } = require('./voice');
 const { generateSpendingHeatmap, generateWeeklyReport } = require('./reports');
+const { extractExpensesFromText } = require('./groq');
 const { getFinancialPersonality } = require('./personality');
 const dashboardApi = require('./routes/dashboardApi');
 const scheduler = require('./scheduler');
@@ -381,6 +382,16 @@ bot.on('callback_query', async (query) => {
             }
         });
     }
+
+    if (data.startsWith('rcptdate_')) {
+        const receiptId = data.replace('rcptdate_', '');
+        confirmReceiptDate(bot, query.id, chatId, messageId, receiptId, false);
+    }
+
+    if (data.startsWith('rcpttoday_')) {
+        const receiptId = data.replace('rcpttoday_', '');
+        confirmReceiptDate(bot, query.id, chatId, messageId, receiptId, true);
+    }
 });
 
 // ─── NATURAL LANGUAGE TEXT MESSAGE PARSING ───────────────────────────────────
@@ -509,11 +520,14 @@ bot.on('message', async (msg) => {
 
         if (!/\d/.test(lower)) continue;
 
-        const parsed = parseText(part);
+        const expenses = await extractExpensesFromText(part);
         const groupId = msg.chat.type !== 'private' ? String(msg.chat.id) : null;
 
-        if (parsed.amount > 0) {
-            saveExpense(userId, parsed.amount, parsed.category, parsed.date, parsed.description, groupId, async (err, id) => {
+        for (const parsed of expenses) {
+            if (!parsed.amount || parsed.amount <= 0) continue;
+            const dateStr = parsed.date || new Date().toISOString().split('T')[0];
+
+            saveExpense(userId, parsed.amount, parsed.category, dateStr, parsed.description, groupId, async (err, id) => {
                 if (err) {
                     bot.sendMessage(msg.chat.id, `❌ Failed to save: "${part}"`);
                 } else {
@@ -521,7 +535,7 @@ bot.on('message', async (msg) => {
                         `✅ *Expense Saved!*\n\n` +
                         `💰 Amount: ₹${parsed.amount.toFixed(2)}\n` +
                         `📂 Category: ${parsed.category}\n` +
-                        `📅 Date: ${parsed.date}\n` +
+                        `📅 Date: ${dateStr}\n` +
                         `📝 Note: _${parsed.description}_`,
                         {
                             parse_mode: 'Markdown',

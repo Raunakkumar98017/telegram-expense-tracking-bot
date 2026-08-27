@@ -40,7 +40,7 @@ async function handleVoiceNote(bot, msg) {
 
         for (const parsed of expenses) {
             if (!parsed.amount || parsed.amount <= 0) continue;
-            const dateStr = new Date().toISOString().split('T')[0];
+            const dateStr = parsed.date || new Date().toISOString().split('T')[0];
 
             saveExpense(userId, parsed.amount, parsed.category, dateStr, parsed.description, groupId, async (err, expenseId) => {
                 if (err) {
@@ -52,6 +52,7 @@ async function handleVoiceNote(bot, msg) {
                     `✅ *Voice Expense Saved!*\n\n` +
                     `💰 Amount: ₹${parsed.amount.toFixed(2)}\n` +
                     `📂 Category: ${parsed.category}\n` +
+                    `📅 Date: ${dateStr}\n` +
                     `📝 Note: ${cleanDesc}`,
                     {
                         parse_mode: 'Markdown',
